@@ -1,0 +1,16 @@
+{
+  "name": "@grantmark/payments",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Payment providers for Grantmark licenses: Solana USDC on devnet, Stripe test mode (stub).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@solana-program/memo": "0.15.0",
+    "@solana-program/token": "0.17.0",
+    "@solana/kit": "8.3.0"
+  }
+}
