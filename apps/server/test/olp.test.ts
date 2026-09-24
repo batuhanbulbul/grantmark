@@ -62,7 +62,8 @@ beforeEach(() => {
 
 const basic = (id = CLIENT.id, secret = CLIENT.secret) => `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`;
 
-function post(path: string, form: Record<string, string>, auth: string | undefined = basic()) {
+/** `auth: null` sends no Authorization header. */
+function post(path: string, form: Record<string, string>, auth: string | null = basic()) {
   return app.request(path, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded', ...(auth ? { authorization: auth } : {}) },
@@ -82,7 +83,7 @@ function offerOf(hcrn: string, index = 0): string {
 describe('OLP authentication (RSL §5.3)', () => {
   it('requires HTTP Basic client credentials on every endpoint', async () => {
     for (const path of ['/olp/token', '/olp/introspect', '/olp/key']) {
-      const response = await post(path, {}, undefined);
+      const response = await post(path, {}, null);
       expect(response.status, path).toBe(401);
       expect(response.headers.get('www-authenticate')).toMatch(/^Basic /);
       expect(await json(response)).toMatchObject({ error: 'invalid_client' });
