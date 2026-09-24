@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Environment and secrets — never commit real keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id.json
+*-keypair.json
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
