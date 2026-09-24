@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictional test data for Grantmark. Tomas Reyka is not a real person.
+  Persona: an adult who prohibits hcs:ai-generate and hcs:ai-train.
+  HCRN and HCSI values come from the HCS reserved test range (HCS 1.0 Draft, section 4.6).
+-->
+<rsl xmlns="https://rslstandard.org/rsl"
+     xmlns:hcs="https://humanconsent.org/hcs">
+
+  <hcs:right
+    registry="https://registry.grantmark.example"
+    registration-id="HCRN-0000-0069-G"
+    issued="2026-08-15T09:30:00Z"
+    subject="identity"
+    territory="DE FR"
+    subject-id="HCSI-0000-0035-V">
+
+    <schema type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@id": "https://id.humanconsent.org/HCSI-0000-0035-V",
+        "@type": "Person",
+        "additionalType": "https://humanconsent.org/schemas/identity",
+        "name": "Tomas Reyka",
+        "description": "Fictional person created for Grantmark tests.",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "OfficialPage",
+            "url": "https://personas.grantmark.example/tomas-reyka"
+          }
+        ]
+      }
+    </schema>
+
+    <license>
+      <prohibits type="usage">hcs:ai-generate hcs:ai-train</prohibits>
+      <legal type="attestation">true</legal>
+      <legal type="contact">mailto:rights@tomas-reyka.example</legal>
+    </license>
+
+  </hcs:right>
+</rsl>

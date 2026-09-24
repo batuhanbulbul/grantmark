@@ -1,0 +1,16 @@
+{
+  "@context": "https://schema.org",
+  "@id": "https://id.humanconsent.org/HCSI-0000-0037-X",
+  "@type": "Person",
+  "additionalType": "https://humanconsent.org/schemas/identity",
+  "name": "Arden Holt",
+  "description": "Fictional person created for Grantmark tests.",
+  "birthDate": "1988-07-30",
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "OfficialPage",
+      "url": "https://personas.grantmark.example/arden-holt"
+    }
+  ]
+}

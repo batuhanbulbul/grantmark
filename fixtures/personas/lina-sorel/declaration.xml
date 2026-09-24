@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictional test data for Grantmark. Lina Sorel is not a real person.
+  Persona: a minor whose declaration tries to permit hcs:ai-generate for payment.
+  HCS 1.0 Draft section 1.1 makes every authorizing term for a minor's identity non-operative,
+  so Grantmark must refuse this persona at every step.
+  HCRN and HCSI values come from the HCS reserved test range (HCS 1.0 Draft, section 4.6).
+-->
+<rsl xmlns="https://rslstandard.org/rsl"
+     xmlns:hcs="https://humanconsent.org/hcs">
+
+  <hcs:right
+    registry="https://registry.grantmark.example"
+    registration-id="HCRN-0000-006A-H"
+    issued="2026-09-10T00:00:00Z"
+    subject="identity"
+    subject-scope="image likeness voice"
+    subject-id="HCSI-0000-0036-W"
+    server="https://license.grantmark.example/olp">
+
+    <schema type="application/ld+json"><![CDATA[
+      {
+        "@context": "https://schema.org",
+        "@id": "https://id.humanconsent.org/HCSI-0000-0036-W",
+        "@type": "Person",
+        "additionalType": "https://humanconsent.org/schemas/identity",
+        "name": "Lina Sorel",
+        "description": "Fictional minor created for Grantmark minor-protection tests.",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "OfficialPage",
+            "url": "https://personas.grantmark.example/lina-sorel"
+          }
+        ]
+      }
+    ]]></schema>
+
+    <license>
+      <permits type="usage">hcs:ai-generate</permits>
+      <payment type="purchase">
+        <amount currency="USD">3.00</amount>
+      </payment>
+      <legal type="attestation">true</legal>
+      <legal type="contact">https://registry.grantmark.example/contact/lina-sorel</legal>
+    </license>
+
+  </hcs:right>
+</rsl>

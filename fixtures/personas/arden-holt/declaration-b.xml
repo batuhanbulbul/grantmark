@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictional test data for Grantmark. Arden Holt and Harbor Agency are not real.
+  Persona: the second of two conflicting declarations (see declaration-a.xml). This one, from a
+  different registry, prohibits hcs:ai-generate and hcs:ai-train on "likeness voice".
+  HCRN and HCSI values come from the HCS reserved test range (HCS 1.0 Draft, section 4.6).
+-->
+<rsl xmlns="https://rslstandard.org/rsl"
+     xmlns:hcs="https://humanconsent.org/hcs">
+
+  <hcs:right
+    registry="https://registry.harbor-agency.example"
+    registration-id="HCRN-0000-006C-K"
+    issued="2026-09-12T08:00:00Z"
+    subject="identity"
+    subject-scope="likeness voice"
+    subject-id="HCSI-0000-0037-X">
+
+    <schema type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@id": "https://id.humanconsent.org/HCSI-0000-0037-X",
+        "@type": "Person",
+        "additionalType": "https://humanconsent.org/schemas/identity",
+        "name": "Arden Holt",
+        "description": "Fictional person created for Grantmark tests.",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "OfficialPage",
+            "url": "https://personas.grantmark.example/arden-holt"
+          }
+        ]
+      }
+    </schema>
+
+    <license>
+      <prohibits type="usage">hcs:ai-generate hcs:ai-train</prohibits>
+      <legal type="attestation">true</legal>
+      <legal type="contact">https://registry.harbor-agency.example/contact</legal>
+    </license>
+
+  </hcs:right>
+</rsl>

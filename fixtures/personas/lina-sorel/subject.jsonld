@@ -1,0 +1,16 @@
+{
+  "@context": "https://schema.org",
+  "@id": "https://id.humanconsent.org/HCSI-0000-0036-W",
+  "@type": "Person",
+  "additionalType": "https://humanconsent.org/schemas/identity",
+  "name": "Lina Sorel",
+  "description": "Fictional minor created for Grantmark minor-protection tests.",
+  "birthDate": "2011-05-20",
+  "identifier": [
+    {
+      "@type": "PropertyValue",
+      "propertyID": "OfficialPage",
+      "url": "https://personas.grantmark.example/lina-sorel"
+    }
+  ]
+}

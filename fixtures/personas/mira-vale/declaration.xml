@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictional test data for Grantmark. Mira Vale is not a real person.
+  Persona: an adult who permits hcs:ai-generate for a one-time payment (main demo path).
+  HCRN and HCSI values come from the HCS reserved test range (HCS 1.0 Draft, section 4.6).
+-->
+<rsl xmlns="https://rslstandard.org/rsl"
+     xmlns:hcs="https://humanconsent.org/hcs">
+
+  <hcs:right
+    registry="https://registry.grantmark.example"
+    registration-id="HCRN-0000-0068-F"
+    issued="2026-09-01T00:00:00Z"
+    subject="identity"
+    subject-scope="image likeness"
+    subject-id="HCSI-0000-0034-T"
+    max-age="7"
+    server="https://license.grantmark.example/olp">
+
+    <schema type="application/ld+json"><![CDATA[
+      {
+        "@context": "https://schema.org",
+        "@id": "https://id.humanconsent.org/HCSI-0000-0034-T",
+        "@type": "Person",
+        "additionalType": "https://humanconsent.org/schemas/identity",
+        "name": "Mira Vale",
+        "description": "Fictional person created for Grantmark tests.",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "OfficialPage",
+            "url": "https://personas.grantmark.example/mira-vale"
+          }
+        ]
+      }
+    ]]></schema>
+
+    <license>
+      <permits type="usage">hcs:ai-generate</permits>
+      <permits type="user">commercial</permits>
+      <prohibits type="usage">hcs:ai-train</prohibits>
+      <payment type="purchase">
+        <amount currency="USD">5.00</amount>
+      </payment>
+      <legal type="attestation">true</legal>
+      <legal type="contact">https://registry.grantmark.example/contact/mira-vale</legal>
+    </license>
+
+    <license>
+      <permits type="usage">hcs:ai-generate</permits>
+      <permits type="user">non-commercial personal</permits>
+      <prohibits type="usage">hcs:ai-train</prohibits>
+      <payment type="purchase">
+        <amount currency="USD">1.00</amount>
+      </payment>
+      <legal type="attestation">true</legal>
+      <legal type="contact">https://registry.grantmark.example/contact/mira-vale</legal>
+    </license>
+
+  </hcs:right>
+</rsl>

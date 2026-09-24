@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fictional test data for Grantmark. Noor Castell is not a real person.
+  Persona: a declaration that permitted hcs:ai-generate for payment and was later withdrawn
+  (status="withdrawn", HCS 1.0 Draft section 3.1.7.1), so it is no longer operative.
+  HCRN and HCSI values come from the HCS reserved test range (HCS 1.0 Draft, section 4.6).
+-->
+<rsl xmlns="https://rslstandard.org/rsl"
+     xmlns:hcs="https://humanconsent.org/hcs">
+
+  <hcs:right
+    registry="https://registry.grantmark.example"
+    registration-id="HCRN-0000-006D-M"
+    issued="2026-06-01T00:00:00Z"
+    subject="identity"
+    subject-scope="image likeness"
+    subject-id="HCSI-0000-0038-Y"
+    status="withdrawn"
+    server="https://license.grantmark.example/olp">
+
+    <schema type="application/ld+json"><![CDATA[
+      {
+        "@context": "https://schema.org",
+        "@id": "https://id.humanconsent.org/HCSI-0000-0038-Y",
+        "@type": "Person",
+        "additionalType": "https://humanconsent.org/schemas/identity",
+        "name": "Noor Castell",
+        "description": "Fictional person created for Grantmark tests.",
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "OfficialPage",
+            "url": "https://personas.grantmark.example/noor-castell"
+          }
+        ]
+      }
+    ]]></schema>
+
+    <license>
+      <permits type="usage">hcs:ai-generate</permits>
+      <payment type="purchase">
+        <amount currency="USD">2.50</amount>
+      </payment>
+      <legal type="attestation">true</legal>
+      <legal type="contact">https://registry.grantmark.example/contact/noor-castell</legal>
+    </license>
+
+  </hcs:right>
+</rsl>
