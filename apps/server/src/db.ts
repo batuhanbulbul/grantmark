@@ -171,6 +171,16 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX assets_by_hash ON assets (sha256);
     `,
   },
+  {
+    id: 5,
+    name: 'canonical license terms',
+    sql: `
+      -- The offer's structural form (license-match.ts), so later checks do not depend on the
+      -- namespace prefixes in scope where the offer was published.
+      ALTER TABLE license_requests ADD COLUMN license_canonical TEXT NOT NULL DEFAULT '';
+      ALTER TABLE licenses ADD COLUMN license_canonical TEXT NOT NULL DEFAULT '';
+    `,
+  },
 ];
 
 /** Applies pending migrations in order, each in its own transaction. Returns how many ran. */

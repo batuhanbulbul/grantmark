@@ -127,7 +127,7 @@ export class PaymentService {
     const sameTerms =
       form.license !== undefined &&
       form.resource !== undefined &&
-      canonicalLicense(form.license) === canonicalLicense(request.licenseXml) &&
+      canonicalLicense(form.license) === request.licenseCanonical &&
       resourceHcrn(form.resource) === request.hcrn;
     if (!sameTerms) {
       return refuse(400, 'invalid_request', 'license and resource must be the ones this payment was requested for');

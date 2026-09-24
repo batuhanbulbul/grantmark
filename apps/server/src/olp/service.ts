@@ -115,6 +115,12 @@ const isRefusal = (value: object): value is Refusal => 'kind' in value && value.
 const permits = (scope: ScopeEvaluation | undefined) =>
   scope !== undefined && (scope.decision === 'permitted' || scope.decision === 'permitted_with_terms');
 
+/** The 0-based position of the offer with these canonical terms in the current declaration, or -1. */
+const offerIndex = (loaded: Loaded, canonical: string) =>
+  loaded.right.licenses.findIndex((license) => canonicalElement(license.element) === canonical);
+const noLongerOffered = () =>
+  refuse(403, 'invalid_license', 'these license terms are no longer offered by the current declaration', 'not_operative');
+
 /** The HCRN named by an OLP `resource`: the HCRN itself or its canonical URI. */
 export function resourceHcrn(resource: string): string | undefined {
   const value = collapse(resource);
@@ -185,7 +191,7 @@ export class LicenseService {
 
     const submitted = canonicalLicense(form.license);
     if (submitted === undefined) return refuse(400, 'invalid_license', 'license must be one well-formed RSL <license> element');
-    const index = loaded.right.licenses.findIndex((license) => canonicalElement(license.element) === submitted);
+    const index = offerIndex(loaded, submitted);
     if (index === -1) {
       return refuse(400, 'invalid_license', `license does not match any offer in the current declaration for ${hcrn}`);
     }
@@ -207,6 +213,7 @@ export class LicenseService {
       hcsi: declaration.subjectId,
       declarationSha256: loaded.stored.sha256,
       licenseXml: offer.source,
+      licenseCanonical: submitted,
       licenseIndex: index + 1,
       usage: decided.usage,
       subjectScope: decided.scopes,
@@ -226,15 +233,18 @@ export class LicenseService {
     const request = this.licenses.request(requestId);
     if (request === undefined) return refuse(400, 'invalid_request', `unknown license request ${requestId}`);
     const existing = this.licenses.licenseForRequest(requestId);
-    if (existing !== undefined) return this.tokenFor(await this.withReceipt(existing, payment), {});
+    if (existing !== undefined) {
+      // A retry after the license exists: the receipt is kept either way, but a new token is
+      // handed out only while the license still permits new uses.
+      const license = await this.withReceipt(existing, payment);
+      if (license.status === 'revoked') return refuse(403, 'invalid_license', 'this license has been revoked', 'not_operative');
+      return this.checkCurrent(license) ?? this.tokenFor(license, {});
+    }
 
     const loaded = this.load(request.hcrn);
     if (isRefusal(loaded)) return loaded;
-    const offered = canonicalLicense(request.licenseXml);
-    const index = loaded.right.licenses.findIndex((license) => canonicalElement(license.element) === offered);
-    if (index === -1) {
-      return refuse(403, 'invalid_license', 'these license terms are no longer offered by the current declaration', 'not_operative');
-    }
+    const index = offerIndex(loaded, request.licenseCanonical);
+    if (index === -1) return noLongerOffered();
     const decided = this.decide(loaded, index, request.subjectScope, request.place);
     if (isRefusal(decided)) return decided;
 
@@ -438,6 +448,9 @@ export class LicenseService {
     const evaluations = this.evaluations(loaded, license.usage, license.subjectScope, license.place);
     const blocked = this.blocked(loaded, evaluations);
     if (blocked !== undefined) return blocked;
+    // New uses need the licensed terms to still be on offer: a changed price or a removed offer
+    // is a change like any other (HCS §1.3).
+    if (offerIndex(loaded, license.licenseCanonical) === -1) return noLongerOffered();
     for (const scope of license.subjectScope) {
       for (const evaluation of evaluations) {
         const result = evaluation.scopes.find((s) => s.scope === scope);

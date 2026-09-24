@@ -1,4 +1,5 @@
-import { HCS_NAMESPACE, RSL_NAMESPACE } from '@grantmark/hcs';
+import type { DatabaseSync } from 'node:sqlite';
+import { HCS_NAMESPACE, RSL_NAMESPACE, canonicalLicense } from '@grantmark/hcs';
 import { createLocalJWKSet, jwtVerify, type JSONWebKeySet } from 'jose';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp, createServices, type Services } from '../src/app';
@@ -20,6 +21,7 @@ const FREE_LICENSE = `<license><permits type="usage">hcs:ai-generate</permits>${
 const DAY = 24 * 60 * 60 * 1000;
 
 let clock: Date;
+let db: DatabaseSync;
 let services: Services;
 let app: ReturnType<typeof createApp>;
 
@@ -42,7 +44,8 @@ function testDeclaration(hcrn: string, attributes: string, licenses: string, reg
 
 beforeEach(() => {
   clock = new Date('2026-09-20T10:00:00Z');
-  services = createServices(openDatabase(':memory:'), config, () => clock);
+  db = openDatabase(':memory:');
+  services = createServices(db, config, () => clock);
   seedPersonas(services.registry, config);
   services.registry.putSubject({
     '@context': 'https://schema.org',
@@ -158,6 +161,18 @@ describe('POST /olp/token: a free license', () => {
     expect(services.licenses.license(String(body.license_id))).toMatchObject({ clientId: CLIENT.id, hcrn: FREE_HCRN, status: 'active' });
   });
 
+  it('issues a license for an offer written with a prefix declared on an ancestor element', async () => {
+    const prefixed = testDeclaration(FREE_HCRN, `subject-scope="image likeness" server="${config.licenseServerUrl}"`, FREE_LICENSE)
+      .replace(`<rsl xmlns="${RSL_NAMESPACE}"`, `<r:rsl xmlns:r="${RSL_NAMESPACE}"`)
+      .replace('</rsl>', '</r:rsl>')
+      .replace(/<(\/?)(schema|license|permits|legal)\b/g, '<$1r:$2');
+    clock = new Date('2026-09-25T10:00:00Z');
+    services.registry.publish(prefixed);
+    clock = new Date('2026-10-01T12:00:00Z');
+    const response = await token({ license: FREE_LICENSE, resource: FREE_HCRN });
+    expect(response.status).toBe(200);
+  });
+
   it('accepts the canonical HCRN URI as resource and the offer in any order or spacing', async () => {
     const reordered = `<license>\n ${LEGAL}\n <permits type="usage"> hcs:ai-generate </permits></license>`;
     const response = await token({ license: reordered, resource: `https://id.humanconsent.org/${FREE_HCRN}` });
@@ -268,6 +283,7 @@ describe('POST /olp/token: refusals and payment', () => {
       hcsi: 'HCSI-0000-0036-W',
       declarationSha256: services.registry.declaration('HCRN-0000-006A-H')!.sha256,
       licenseXml: offerOf('HCRN-0000-006A-H'),
+      licenseCanonical: canonicalLicense(offerOf('HCRN-0000-006A-H'))!,
       licenseIndex: 1,
       usage: ['hcs:ai-generate'],
       subjectScope: ['image'],
@@ -276,6 +292,33 @@ describe('POST /olp/token: refusals and payment', () => {
     const outcome = await services.licensing.issue(request.id);
     expect(outcome).toMatchObject({ kind: 'error', reasonCode: 'minor_protection' });
     expect(services.licenses.licenseForRequest(request.id)).toBeUndefined();
+  });
+});
+
+describe('issuing again for a request that already has a license', () => {
+  async function freeLicense() {
+    const body = await json(await token({ license: FREE_LICENSE, resource: FREE_HCRN }));
+    return services.licenses.license(String(body.license_id))!;
+  }
+
+  it('hands out a new token while the license still permits new uses', async () => {
+    const license = await freeLicense();
+    expect(await services.licensing.issue(license.requestId)).toMatchObject({ kind: 'token', license: { id: license.id } });
+  });
+
+  it('refuses once the declaration is withdrawn', async () => {
+    const license = await freeLicense();
+    clock = new Date('2026-10-02T12:00:00Z');
+    const current = new TextDecoder().decode(services.registry.declaration(FREE_HCRN)!.content);
+    services.registry.publish(current.replace('subject="identity"', 'subject="identity" status="withdrawn"'));
+    clock = new Date('2026-10-03T12:00:00Z');
+    expect(await services.licensing.issue(license.requestId)).toMatchObject({ kind: 'error', reasonCode: 'not_operative' });
+  });
+
+  it('refuses a revoked license', async () => {
+    const license = await freeLicense();
+    db.prepare("UPDATE licenses SET status = 'revoked' WHERE id = ?").run(license.id);
+    expect(await services.licensing.issue(license.requestId)).toMatchObject({ kind: 'error', error: 'invalid_license' });
   });
 });
 
@@ -314,6 +357,19 @@ describe('POST /olp/introspect (RSL §5.5)', () => {
     const body = await json(await post('/olp/introspect', { token: access, resource: FREE_HCRN }));
     expect(body).toMatchObject({ active: true, permitted: false });
     expect(String(body.reason)).toMatch(/withdrawn/);
+  });
+
+  it('is not permitted for new uses once the licensed offer is no longer in the declaration', async () => {
+    const access = await freeToken();
+    clock = new Date('2026-10-02T12:00:00Z');
+    const current = new TextDecoder().decode(services.registry.declaration(FREE_HCRN)!.content);
+    services.registry.publish(
+      current.replace('</permits>', '</permits><payment type="purchase"><amount currency="USD">1.00</amount></payment>'),
+    );
+    clock = new Date('2026-10-03T12:00:00Z');
+    const body = await json(await post('/olp/introspect', { token: access, resource: FREE_HCRN }));
+    expect(body).toMatchObject({ active: true, permitted: false });
+    expect(String(body.reason)).toMatch(/no longer offered/);
   });
 
   it('reports expired and unknown tokens as inactive', async () => {

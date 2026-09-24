@@ -16,6 +16,8 @@ export interface NewLicenseRequest {
   readonly declarationSha256: string;
   /** The offer exactly as published in the declaration. */
   readonly licenseXml: string;
+  /** The offer's structural form (`canonicalElement`), which later checks compare against. */
+  readonly licenseCanonical: string;
   /** 1-based position of the offer in the declaration. */
   readonly licenseIndex: number;
   readonly usage: readonly string[];
@@ -40,6 +42,7 @@ export interface License {
   readonly subjectScope: readonly string[];
   readonly place?: string | undefined;
   readonly licenseXml: string;
+  readonly licenseCanonical: string;
   readonly declarationSha256: string;
   readonly validFrom: Date;
   readonly validUntil: Date;
@@ -69,6 +72,7 @@ function toRequest(row: Row): LicenseRequest {
     hcsi: String(row.hcsi),
     declarationSha256: String(row.declaration_sha256),
     licenseXml: String(row.license_xml),
+    licenseCanonical: String(row.license_canonical),
     licenseIndex: Number(row.license_index),
     usage: list(row.usage),
     subjectScope: list(row.subject_scope),
@@ -90,6 +94,7 @@ function toLicense(row: Row): License {
     subjectScope: list(row.subject_scope),
     place: optional(row.place),
     licenseXml: String(row.license_xml),
+    licenseCanonical: String(row.license_canonical),
     declarationSha256: String(row.declaration_sha256),
     validFrom: new Date(String(row.valid_from)),
     validUntil: new Date(String(row.valid_until)),
@@ -121,9 +126,9 @@ export class LicenseStore {
     const id = newId('lrq', now.getTime());
     this.db
       .prepare(
-        `INSERT INTO license_requests (id, client_id, hcrn, hcsi, declaration_sha256, license_xml, license_index, usage,
-           subject_scope, place, amount_value, amount_currency, state, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO license_requests (id, client_id, hcrn, hcsi, declaration_sha256, license_xml, license_canonical,
+           license_index, usage, subject_scope, place, amount_value, amount_currency, state, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
@@ -132,6 +137,7 @@ export class LicenseStore {
         input.hcsi,
         input.declarationSha256,
         input.licenseXml,
+        input.licenseCanonical,
         input.licenseIndex,
         input.usage.join(' '),
         input.subjectScope.join(' '),
@@ -168,8 +174,8 @@ export class LicenseStore {
       this.db
         .prepare(
           `INSERT INTO licenses (id, license_request_id, client_id, hcrn, hcsi, usage, subject_scope, place, license_xml,
-             declaration_sha256, valid_from, valid_until, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+             license_canonical, declaration_sha256, valid_from, valid_until, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
         )
         .run(
           id,
@@ -181,6 +187,7 @@ export class LicenseStore {
           issuance.subjectScope.join(' '),
           request.place ?? null,
           request.licenseXml,
+          request.licenseCanonical,
           issuance.declarationSha256,
           issuance.validFrom.toISOString(),
           issuance.validUntil.toISOString(),

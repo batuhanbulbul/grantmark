@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { HCS_NAMESPACE, RSL_NAMESPACE } from '@grantmark/hcs';
+import { HCS_NAMESPACE, RSL_NAMESPACE, canonicalLicense } from '@grantmark/hcs';
 import { DEVNET_GENESIS_HASH, commitmentMemo, type ParsedTransaction, type SolanaRpc } from '@grantmark/payments';
 import { parsedTransactionFor } from '@grantmark/payments/testing';
 import { loadTestPki, placeholderPng, readStamp } from '@grantmark/stamp';
@@ -274,6 +274,7 @@ describe('POST /v1/licenses/:id/stamp', () => {
       hcsi: 'HCSI-0000-0036-W',
       declarationSha256: services.registry.declaration('HCRN-0000-006A-H')!.sha256,
       licenseXml: offer,
+      licenseCanonical: canonicalLicense(offer)!,
       licenseIndex: 1,
       usage: ['hcs:ai-generate'],
       subjectScope: ['image'],
