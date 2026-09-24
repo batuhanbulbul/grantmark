@@ -17,6 +17,13 @@ coverage/
 id.json
 *-keypair.json
 
+# Local databases
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 # Logs
 *.log
 npm-debug.log*
