@@ -81,6 +81,7 @@ export class PaymentStore {
     return (this.db.prepare("SELECT * FROM payments WHERE status IN ('requires_payment', 'processing') ORDER BY created_at").all() as Row[]).map(toPayment);
   }
 
+  /** Changes an unsettled payment; a succeeded payment is final and stays as it is. */
   update(
     id: string,
     change: { status?: PaymentStatus; reportedSignature?: string | undefined; reason?: string | undefined; request?: SolanaPaymentRequest },
@@ -88,7 +89,9 @@ export class PaymentStore {
     const current = this.get(id);
     if (current === undefined) throw new Error(`unknown payment ${id}`);
     this.db
-      .prepare('UPDATE payments SET status = ?, reported_signature = ?, reason = ?, request_json = ?, updated_at = ? WHERE id = ?')
+      .prepare(
+        "UPDATE payments SET status = ?, reported_signature = ?, reason = ?, request_json = ?, updated_at = ? WHERE id = ? AND status <> 'succeeded'",
+      )
       .run(
         change.status ?? current.status,
         change.reportedSignature ?? current.reportedSignature ?? null,
@@ -100,12 +103,15 @@ export class PaymentStore {
     return this.get(id)!;
   }
 
-  /** Records the verified transaction; throws if it already settled another payment. */
+  /**
+   * Records the verified transaction; throws if it already settled another payment. A payment
+   * that already succeeded keeps its first transaction.
+   */
   markSucceeded(id: string, externalRef: string, receipt: Receipt): StoredPayment {
     this.db
       .prepare(
         `UPDATE payments SET status = 'succeeded', external_ref = ?, reported_signature = ?, receipt_json = ?, reason = NULL, updated_at = ?
-         WHERE id = ?`,
+         WHERE id = ? AND status <> 'succeeded'`,
       )
       .run(externalRef, externalRef, JSON.stringify(receipt), this.now().toISOString(), id);
     return this.get(id)!;

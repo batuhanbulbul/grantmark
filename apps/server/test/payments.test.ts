@@ -231,6 +231,16 @@ describe('payment storage', () => {
     services.payments.markSucceeded(a.id, SIGNATURE, receipt);
     expect(() => services.payments.markSucceeded(b.id, SIGNATURE, { ...receipt, paymentId: b.id })).toThrow();
   });
+
+  it('never moves a succeeded payment to another status or transaction', async () => {
+    const { id, request } = await startPayment();
+    const receipt = { provider: 'solana-usdc-devnet' as const, paymentId: id, externalRef: SIGNATURE, amount: request.amount, paidAt: clock.toISOString(), finality: 'finalized' as const, testMode: true as const };
+    services.payments.markSucceeded(id, SIGNATURE, receipt);
+    // A slower check of the same payment that finishes afterwards must not undo the success.
+    services.payments.update(id, { status: 'processing', reason: 'confirmed; waiting for finalized commitment' });
+    services.payments.markSucceeded(id, OTHER_SIGNATURE, { ...receipt, externalRef: OTHER_SIGNATURE });
+    expect(services.payments.get(id)).toMatchObject({ status: 'succeeded', externalRef: SIGNATURE });
+  });
 });
 
 describe('payment poller (fallback when the client never reports the signature)', () => {
@@ -241,6 +251,41 @@ describe('payment poller (fallback when the client never reports the signature)'
     expect(await services.paymentService.poll()).toBe(1);
     expect(services.payments.get(id)?.status).toBe('succeeded');
     expect(services.licenses.licenseForRequest(request.licenseRequestId)).toBeDefined();
+  });
+
+  it('still scans for the memo after the client reported a transaction that never landed', async () => {
+    const { id, request } = await startPayment();
+    // The wallet's first transaction was dropped; it resent a new one the client never reported.
+    expect((await token({ payment_id: id, payment_evidence: OTHER_SIGNATURE })).status).toBe(402);
+    expect(services.payments.get(id)?.reportedSignature).toBe(OTHER_SIGNATURE);
+    payOnChain(request);
+    rpc.history = [{ signature: SIGNATURE, err: null, memo: `[47] ${request.memo}`, blockTime: null }];
+    expect(await services.paymentService.poll()).toBe(1);
+    expect(services.payments.get(id)).toMatchObject({ status: 'succeeded', externalRef: SIGNATURE });
+  });
+
+  it('scans once more before it expires a stale request', async () => {
+    const { id, request } = await startPayment();
+    payOnChain(request);
+    rpc.history = [{ signature: SIGNATURE, err: null, memo: `[47] ${request.memo}`, blockTime: null }];
+    clock = new Date(clock.getTime() + 20 * 60_000);
+    expect(await services.paymentService.poll()).toBe(1);
+    expect(services.payments.get(id)?.status).toBe('succeeded');
+  });
+
+  it('runs one pass at a time', async () => {
+    await startPayment();
+    let scans = 0;
+    rpc.getSignaturesForAddress = async () => {
+      scans++;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return [];
+    };
+    await services.paymentService.poll();
+    const single = scans;
+    scans = 0;
+    await Promise.all([services.paymentService.poll(), services.paymentService.poll(), services.paymentService.poll()]);
+    expect(scans).toBe(single);
   });
 
   it('marks stale unpaid requests as expired', async () => {
@@ -268,5 +313,16 @@ describe('/v1/payments/:id', () => {
     const body = await json(response);
     expect(body.accepts[0].memo).toBe(request.memo);
     expect(body.accepts[0].transaction).not.toBe(request.transaction);
+  });
+
+  it('gives no new transaction once the license could no longer be issued, and keeps the payment open', async () => {
+    const { id } = await startPayment();
+    const current = new TextDecoder().decode(services.registry.declaration(MIRA)!.content);
+    services.registry.publish(current.replace('max-age="7"', 'max-age="7" status="withdrawn"'));
+    const response = await app.request(`/v1/payments/${id}/transaction`, { method: 'POST', headers: { authorization: basic() } });
+    expect(response.status).toBe(403);
+    expect(await json(response)).toMatchObject({ error: 'invalid_license', reason_code: 'not_operative' });
+    // A transaction already on its way must still be found by the poller.
+    expect(services.payments.get(id)?.status).toBe('requires_payment');
   });
 });

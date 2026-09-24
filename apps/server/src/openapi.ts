@@ -115,7 +115,12 @@ export function openApiDocument(config: Config) {
         summary: 'Rebuild the unsigned devnet transaction with a fresh blockhash (same memo)',
         security: [{ basicAuth: [] }],
         parameters: [id('id', 'Payment id (pay_…)')],
-        responses: { 200: json('Payment'), 401: error('invalid_client'), 404: error('No open payment') },
+        responses: {
+          200: json('Payment'),
+          401: error('invalid_client'),
+          403: error('The license could no longer be issued (reason_code); the payment stays open'),
+          404: error('No open payment'),
+        },
       },
     },
     '/v1/licenses/{id}': {

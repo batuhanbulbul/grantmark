@@ -265,6 +265,18 @@ export class LicenseService {
     return this.tokenFor(await this.withReceipt(license, payment), decided.excluded);
   }
 
+  /** Why a stored request could no longer be licensed now, e.g. before a payment is refreshed. */
+  recheck(requestId: string): Refusal | undefined {
+    const request = this.licenses.request(requestId);
+    if (request === undefined) return refuse(400, 'invalid_request', `unknown license request ${requestId}`);
+    const loaded = this.load(request.hcrn);
+    if (isRefusal(loaded)) return loaded;
+    const index = offerIndex(loaded, request.licenseCanonical);
+    if (index === -1) return noLongerOffered();
+    const decided = this.decide(loaded, index, request.subjectScope, request.place);
+    return isRefusal(decided) ? decided : undefined;
+  }
+
   /** Signs and stores the license's public receipt if it has none yet. */
   private async withReceipt(license: License, payment: ReceiptPayment | undefined): Promise<License> {
     if (license.receiptJws !== undefined) return license;

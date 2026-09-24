@@ -54,6 +54,7 @@ export class PaymentService {
   private readonly provider: SolanaUsdcDevnet;
   private readonly config: Config;
   private readonly now: () => Date;
+  private polling = false;
 
   constructor(deps: {
     payments: PaymentStore;
@@ -135,10 +136,16 @@ export class PaymentService {
     return this.settleStored(payment, form.payment_evidence);
   }
 
-  /** The payment with a fresh transaction (new blockhash, same memo), for its owner. */
-  async refresh(client: Client, id: string): Promise<StoredPayment | undefined> {
+  /**
+   * The payment with a fresh transaction (new blockhash, same memo), for its owner, while the
+   * license could still be issued. A refusal leaves the payment open, so a transaction already
+   * on its way is still found and kept on record.
+   */
+  async refresh(client: Client, id: string): Promise<StoredPayment | Refusal | undefined> {
     const payment = this.owned(client, id);
     if (payment === undefined || payment.status !== 'requires_payment' || this.now() > payment.expiresAt) return undefined;
+    const refusal = this.licensing.recheck(payment.licenseRequestId);
+    if (refusal !== undefined) return refusal;
     return this.payments.update(id, { request: await this.provider.refreshTransaction(payment.request) });
   }
 
@@ -149,22 +156,33 @@ export class PaymentService {
 
   /**
    * Settles open payments whose transaction was never reported, by scanning for their memo on
-   * devnet, and expires stale ones. Returns how many licenses were issued.
+   * devnet, and expires stale ones. Returns how many licenses were issued. Passes never overlap,
+   * so a slow devnet cannot pile them up.
    */
   async poll(): Promise<number> {
-    let issued = 0;
-    for (const payment of this.payments.open()) {
-      const stale = this.now().getTime() > payment.expiresAt.getTime() + EXPIRY_GRACE_MS;
-      if (payment.reportedSignature === undefined && stale) {
-        this.payments.update(payment.id, { status: 'expired', reason: 'the payment request expired unpaid' });
-        continue;
+    if (this.polling) return 0;
+    this.polling = true;
+    try {
+      let issued = 0;
+      for (const payment of this.payments.open()) {
+        if (await this.pollOne(payment)) issued++;
       }
-      const signature = payment.reportedSignature ?? (await this.provider.findPayment(payment.request).catch(() => undefined));
-      if (signature === undefined) continue;
-      const outcome = await this.settleStored(payment, signature);
-      if (outcome.kind === 'token') issued++;
+      return issued;
+    } finally {
+      this.polling = false;
     }
-    return issued;
+  }
+
+  private async pollOne(payment: StoredPayment): Promise<boolean> {
+    // The memo finds the payment whichever transaction carried it: a wallet may resend a
+    // transaction after the one the client reported was dropped.
+    const found = await this.provider.findPayment(payment.request).catch(() => undefined);
+    const signature = found ?? payment.reportedSignature;
+    if (signature !== undefined) return (await this.settleStored(payment, signature)).kind === 'token';
+    if (this.now().getTime() > payment.expiresAt.getTime() + EXPIRY_GRACE_MS) {
+      this.payments.update(payment.id, { status: 'expired', reason: 'the payment request expired unpaid' });
+    }
+    return false;
   }
 
   private async settleStored(payment: StoredPayment, evidence: string | undefined): Promise<SettleOutcome> {

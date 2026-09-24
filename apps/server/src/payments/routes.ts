@@ -24,6 +24,10 @@ export function paymentRoutes(services: { clients: ClientStore; licenses: Licens
   app.post('/v1/payments/:id/transaction', async (c) => {
     const payment = await paymentService.refresh(c.get('client'), c.req.param('id'));
     if (payment === undefined) return apiError(c, 404, 'not_found', 'no open payment with this id for this client');
+    if ('kind' in payment) {
+      const extra = payment.reasonCode === undefined ? {} : { reason_code: payment.reasonCode };
+      return apiError(c, payment.status, payment.error, payment.description, extra, noStore);
+    }
     return c.json(paymentBody(payment, licenses.request(payment.licenseRequestId)!), 200, noStore);
   });
 
