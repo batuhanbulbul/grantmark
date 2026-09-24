@@ -28,6 +28,7 @@ import {
   type ScopeEvaluation,
   type UsageToken,
 } from '@grantmark/hcs';
+import { USDC_DECIMALS, toBaseUnits } from '@grantmark/payments';
 import type { Config } from '../config';
 import { registryView, subjectDocuments } from '../registry/view';
 import type { RegistryStore, StoredDeclaration } from '../registry/store';
@@ -129,17 +130,29 @@ export function resourceHcrn(resource: string): string | undefined {
 }
 
 /**
- * The price to collect, if any. Offers without money (no `<payment>`, `free`, or `attribution`)
- * need none; offers that rely on an outside clearance process are not supported.
+ * The price to collect, if any. Offers without money (no `<payment>`, `free`, `attribution`, or
+ * a zero amount) need none. Any other amount must be positive USD that devnet USDC can pay
+ * exactly. Offers that rely on an outside clearance process are not supported.
  */
 function priceOf(offer: LicenseTerms): { value: string; currency: string } | undefined | Refusal {
   const payment = offer.payment;
   if (payment === undefined || payment.type === 'free') return undefined;
-  if (payment.amount !== undefined && Number(payment.amount.value) > 0) {
-    if (payment.amount.currency !== 'USD') {
+  const amount = payment.amount;
+  if (amount !== undefined && !/^\+?0*(?:\.0*)?$/.test(amount.value)) {
+    if (amount.currency !== 'USD') {
       return refuse(403, 'invalid_license', 'this license server only settles prices in USD', 'unsupported_terms');
     }
-    return payment.amount;
+    try {
+      toBaseUnits(amount.value, USDC_DECIMALS);
+    } catch {
+      return refuse(
+        403,
+        'invalid_license',
+        `the price ${amount.value} ${amount.currency} is not a positive amount with at most ${USDC_DECIMALS} decimal places`,
+        'unsupported_terms',
+      );
+    }
+    return amount;
   }
   if (payment.custom !== undefined || payment.standard !== undefined || payment.accepts !== undefined) {
     return refuse(403, 'invalid_license', 'this offer needs a clearance process outside this license server', 'unsupported_terms');

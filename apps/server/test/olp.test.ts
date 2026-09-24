@@ -270,6 +270,20 @@ describe('POST /olp/token: refusals and payment', () => {
     expect(String(body.error_description)).toMatch(/withdrawn/);
   });
 
+  it.each([
+    ['a negative price', '-5.00'],
+    ['a price finer than USDC can pay', '0.0000001'],
+  ])('refuses %s instead of issuing a free license', async (_, amount) => {
+    const priced = FREE_LICENSE.replace('</permits>', `</permits><payment type="purchase"><amount currency="USD">${amount}</amount></payment>`);
+    clock = new Date('2026-09-25T10:00:00Z');
+    services.registry.publish(testDeclaration(FREE_HCRN, `subject-scope="image likeness" server="${config.licenseServerUrl}"`, priced));
+    clock = new Date('2026-10-01T12:00:00Z');
+    const response = await token({ license: priced, resource: FREE_HCRN });
+    expect(response.status).toBe(403);
+    expect(await json(response)).toMatchObject({ error: 'invalid_license', reason_code: 'unsupported_terms' });
+    expect(services.licenses.requestCount()).toBe(0);
+  });
+
   it('refuses a license that permits nothing', async () => {
     const response = await token({ license: offerOf('HCRN-0000-0069-G'), resource: 'HCRN-0000-0069-G', place: 'DE' });
     expect(response.status).toBe(403);
