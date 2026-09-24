@@ -1,4 +1,5 @@
 import type { DatabaseSync } from 'node:sqlite';
+import { fileURLToPath } from 'node:url';
 import { SolanaUsdcDevnet, createDevnetRpc, type SolanaRpc } from '@grantmark/payments';
 import { Stamper, loadTestPki, type SigningMaterial } from '@grantmark/stamp';
 import { Hono } from 'hono';
@@ -17,6 +18,7 @@ import { PaymentService } from './payments/service';
 import { PayeeStore, PaymentStore } from './payments/store';
 import { registryRoutes } from './registry/routes';
 import { RegistryStore } from './registry/store';
+import { serveWeb } from './web';
 
 export interface Services {
   readonly registry: RegistryStore;
@@ -71,7 +73,10 @@ export function createServices(
   };
 }
 
-export function createApp(services: Services, config: Config): Hono {
+/** The built demo web app, served at `/` when present. */
+export const DEFAULT_WEB_DIST = new URL('../../web/dist/', import.meta.url);
+
+export function createApp(services: Services, config: Config, options: { webDist?: string | URL } = {}): Hono {
   const app = new Hono();
   app.route('/', registryRoutes(services.registry, config));
   app.route('/', olpRoutes(services));
@@ -79,6 +84,8 @@ export function createApp(services: Services, config: Config): Hono {
   app.route('/', licenseRoutes(services, config, services.now));
   app.route('/', verifyRoutes(services, config, services.now));
   app.route('/', demoRoutes(services, config, services.now, config.demoClientId));
+  const webDist = options.webDist ?? DEFAULT_WEB_DIST;
+  serveWeb(app, typeof webDist === 'string' ? webDist : fileURLToPath(webDist));
   app.notFound((c) => apiError(c, 404, 'not_found', `no route for ${c.req.method} ${c.req.path}`));
   app.onError((error, c) => {
     console.error(error);
