@@ -13,6 +13,7 @@ describe('loadConfig', () => {
       solanaRpcUrl: 'https://api.devnet.solana.com',
       operatorWallet: undefined,
       operatorFeeBps: 0,
+      demoClientId: 'demo-studio',
     });
   });
 

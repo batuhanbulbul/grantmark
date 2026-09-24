@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 
-export type ErrorStatus = 400 | 401 | 402 | 403 | 404 | 413 | 415 | 500;
+export type ErrorStatus = 400 | 401 | 402 | 403 | 404 | 413 | 415 | 500 | 503;
 
 /** An OAuth-style error body, `{error, error_description}`, plus any extension fields. */
 export function apiError(

@@ -3,6 +3,7 @@ import { SolanaUsdcDevnet, createDevnetRpc, type SolanaRpc } from '@grantmark/pa
 import { Stamper, loadTestPki, type SigningMaterial } from '@grantmark/stamp';
 import { Hono } from 'hono';
 import type { Config } from './config';
+import { demoRoutes } from './demo/routes';
 import { apiError } from './http';
 import { licenseRoutes } from './licenses/routes';
 import { verifyRoutes } from './licenses/verify';
@@ -77,6 +78,7 @@ export function createApp(services: Services, config: Config): Hono {
   app.route('/', paymentRoutes(services));
   app.route('/', licenseRoutes(services, config, services.now));
   app.route('/', verifyRoutes(services, config, services.now));
+  app.route('/', demoRoutes(services, config, services.now, config.demoClientId));
   app.notFound((c) => apiError(c, 404, 'not_found', `no route for ${c.req.method} ${c.req.path}`));
   app.onError((error, c) => {
     console.error(error);

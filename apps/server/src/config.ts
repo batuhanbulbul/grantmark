@@ -26,6 +26,8 @@ export interface Config {
   readonly operatorWallet?: string | undefined;
   /** Operator fee in basis points of each payment; 0 without an operator wallet. */
   readonly operatorFeeBps: number;
+  /** The OLP client the demo web app acts as (server side). */
+  readonly demoClientId: string;
 }
 
 const DEFAULTS = {
@@ -82,5 +84,6 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): C
     solanaRpcUrl,
     operatorWallet,
     operatorFeeBps,
+    demoClientId: read('DEMO_CLIENT_ID') ?? 'demo-studio',
   };
 }

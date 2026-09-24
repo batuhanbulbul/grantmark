@@ -155,6 +155,12 @@ export class RegistryStore {
     };
   }
 
+  subjects(): StoredSubject[] {
+    return (this.db.prepare('SELECT hcsi FROM rights_subjects ORDER BY hcsi').all() as { hcsi: string }[]).map(
+      (row) => this.subject(row.hcsi)!,
+    );
+  }
+
   /**
    * Publishes a document holding exactly one conforming `<hcs:right>`. Identical content to the
    * current version is not stored again.

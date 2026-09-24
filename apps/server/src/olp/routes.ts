@@ -15,7 +15,7 @@ import type { StoredPayment } from '../payments/store';
 import { parseBasicAuth, type Client, type ClientStore } from './clients';
 import type { KeyStore } from './keys';
 import type { LicenseStore } from './licenses';
-import type { LicenseService, TokenIssued } from './service';
+import type { LicenseService, TokenForm, TokenIssued } from './service';
 
 export type ClientEnv = { Variables: { client: Client } };
 
@@ -52,7 +52,7 @@ async function readForm(c: Context): Promise<Record<string, string> | string> {
   return form;
 }
 
-interface OlpServices {
+export interface OlpServices {
   readonly clients: ClientStore;
   readonly keys: KeyStore;
   readonly licenses: LicenseStore;
@@ -60,11 +60,14 @@ interface OlpServices {
   readonly paymentService: PaymentService;
 }
 
-export function olpRoutes(services: OlpServices): Hono<ClientEnv> {
-  const { clients, keys, licenses, licensing, paymentService } = services;
-  const app = new Hono<ClientEnv>();
+/**
+ * Runs a token request (RSL §5.4 plus Grantmark's payment extension) for an authenticated client
+ * and turns the outcome into the HTTP response. Shared by /olp/token and the demo studio.
+ */
+export async function respondToTokenRequest(c: Context, services: OlpServices, client: Client, form: TokenForm): Promise<Response> {
+  const { licenses, licensing, paymentService } = services;
 
-  const tokenResponse = (c: Context, outcome: TokenIssued) => {
+  const tokenResponse = (outcome: TokenIssued) => {
     const excluded = Object.keys(outcome.excludedScope).length > 0 ? { excluded_scope: outcome.excludedScope } : {};
     return c.json(
       {
@@ -79,14 +82,14 @@ export function olpRoutes(services: OlpServices): Hono<ClientEnv> {
       NO_STORE,
     );
   };
-  const paymentRequired = (c: Context, payment: StoredPayment, description: string) =>
+  const paymentRequired = (payment: StoredPayment, description: string) =>
     apiError(c, 402, 'payment_required', description, { payment: paymentBody(payment, licenses.request(payment.licenseRequestId)!) }, NO_STORE);
-  const settled = (c: Context, outcome: SettleOutcome) => {
+  const settled = (outcome: SettleOutcome) => {
     switch (outcome.kind) {
       case 'token':
-        return tokenResponse(c, outcome);
+        return tokenResponse(outcome);
       case 'pending':
-        return paymentRequired(c, outcome.payment, outcome.payment.reason ?? 'The payment is not complete yet.');
+        return paymentRequired(outcome.payment, outcome.payment.reason ?? 'The payment is not complete yet.');
       case 'error': {
         const extra = {
           ...(outcome.reasonCode === undefined ? {} : { reason_code: outcome.reasonCode }),
@@ -97,38 +100,34 @@ export function olpRoutes(services: OlpServices): Hono<ClientEnv> {
     }
   };
 
+  if (form.payment_id !== undefined) return settled(await paymentService.settle(client, form));
+  const outcome = await licensing.requestToken(client, form);
+  if (outcome.kind === 'token') return tokenResponse(outcome);
+  if (outcome.kind === 'error') return settled(outcome);
+
+  const started = await paymentService.start(outcome.request, form.payer);
+  if (started.kind === 'error') return settled(started);
+  if (started.kind === 'payment') return paymentRequired(started.payment, 'This license requires payment before a token can be issued.');
+  return apiError(
+    c,
+    402,
+    'payment_required',
+    'This license requires payment. Repeat the request with payer=<your Solana devnet wallet address> to get a transaction to sign.',
+    { payment: { license_request: started.request.id, status: 'requires_payment', amount: started.request.amount, accepts: [] } },
+    NO_STORE,
+  );
+}
+
+export function olpRoutes(services: OlpServices): Hono<ClientEnv> {
+  const { clients, keys, licensing } = services;
+  const app = new Hono<ClientEnv>();
+
   app.use('/olp/*', bodyLimit({ maxSize: MAX_REQUEST_BYTES }), clientAuth(clients));
 
   app.post('/olp/token', async (c) => {
     const form = await readForm(c);
     if (typeof form === 'string') return apiError(c, 400, 'invalid_request', form, {}, NO_STORE);
-    const client = c.get('client');
-    if (form.payment_id !== undefined) return settled(c, await paymentService.settle(client, form));
-
-    const outcome = await licensing.requestToken(client, form);
-    if (outcome.kind === 'token') return tokenResponse(c, outcome);
-    if (outcome.kind === 'error') return settled(c, outcome);
-
-    const started = await paymentService.start(outcome.request, form.payer);
-    if (started.kind === 'error') return settled(c, started);
-    if (started.kind === 'payment') {
-      return paymentRequired(c, started.payment, 'This license requires payment before a token can be issued.');
-    }
-    return apiError(
-      c,
-      402,
-      'payment_required',
-      'This license requires payment. Repeat the request with payer=<your Solana devnet wallet address> to get a transaction to sign.',
-      {
-        payment: {
-          license_request: started.request.id,
-          status: 'requires_payment',
-          amount: started.request.amount,
-          accepts: [],
-        },
-      },
-      NO_STORE,
-    );
+    return respondToTokenRequest(c, services, c.get('client'), form);
   });
 
   app.post('/olp/introspect', async (c) => {
