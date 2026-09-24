@@ -1,4 +1,7 @@
+export * from './age';
 export * from './conformance';
+export * from './countries';
+export * from './evaluate';
 export * from './ids';
 export * from './lexical';
 export * from './lifecycle';
