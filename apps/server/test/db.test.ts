@@ -30,8 +30,8 @@ describe('database', () => {
     expect(() =>
       db
         .prepare(
-          `INSERT INTO declarations (hcrn, version, content, sha256, registry_url, first_published_at)
-           VALUES ('HCRN-0000-0068-F', 1, x'00', 'x', 'https://unknown.example', '2026-01-01T00:00:00.000Z')`,
+          `INSERT INTO declarations (hcrn, version, content, sha256, registry_url, subject_hcsi, first_published_at)
+           VALUES ('HCRN-0000-0068-F', 1, x'00', 'x', 'https://unknown.example', 'HCSI-0000-0034-T', '2026-01-01T00:00:00.000Z')`,
         )
         .run(),
     ).toThrow(/FOREIGN KEY/);

@@ -129,7 +129,7 @@ describe('GET /registry/subjects/:hcsi (HCS §4.4.2)', () => {
 
 describe('GET /registry/authorization (mock Governance Board record, HCS §6.1)', () => {
   it('lists both mock registries as authorized', async () => {
-    const body = await (await get('/registry/authorization')).json();
+    const body = (await (await get('/registry/authorization')).json()) as { mock: boolean; registries: unknown[] };
     expect(body.mock).toBe(true);
     expect(body.registries).toEqual([
       { registry: config.registryId, name: expect.any(String), authorized: true, territory: null },
