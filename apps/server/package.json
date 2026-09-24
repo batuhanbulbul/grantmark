@@ -16,6 +16,7 @@
     "@grantmark/stamp": "0.0.0",
     "@hono/node-server": "2.1.1",
     "hono": "4.13.9",
-    "jose": "6.2.12"
+    "jose": "6.2.12",
+    "tsx": "4.23.15"
   }
 }

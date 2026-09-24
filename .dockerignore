@@ -1,0 +1,15 @@
+# Only what the image needs: sources, fixtures and lockfile.
+.git
+node_modules
+**/node_modules
+**/dist
+data
+*.db
+*.db-*
+.env
+.env.*
+!.env.example
+docs
+.cache
+.ruff_cache
+coverage
