@@ -13,7 +13,7 @@
 
 ## Status
 
-Research phase.
+Early prototype, in design.
 
 ## License
 
