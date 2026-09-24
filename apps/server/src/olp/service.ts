@@ -11,6 +11,7 @@
 import {
   CANONICAL_ID_BASE,
   SUBJECT_SCOPES,
+  ageStatus,
   canonicalElement,
   canonicalLicense,
   checkDocument,
@@ -380,10 +381,16 @@ export class LicenseService {
 
   /** A refusal when nobody may rely on the declaration now: minor protection or not operative. */
   private blocked(loaded: Loaded, evaluations: readonly Evaluation[]): Refusal | undefined {
+    // The evaluator applies the minors rule; this is a second, independent check on the licensed
+    // declaration itself, so no evaluation detail can open a path for a minor's identity.
+    const age =
+      loaded.declaration.subject === 'identity'
+        ? ageStatus(this.registry.subject(loaded.declaration.subjectId!)?.record, this.now())
+        : undefined;
     const minor = evaluations.find((e) => e.minorProtectionApplied);
-    if (minor !== undefined) {
+    if (minor !== undefined || (age !== undefined && age !== 'adult')) {
       const description =
-        minor.ageStatus === 'minor'
+        (minor?.ageStatus ?? age) === 'minor'
           ? "Minor protection (HCS §1.1): no permission, payment or license path is operative for a minor's identity."
           : 'Grantmark requires evidence of adulthood before any license for an identity, and the Rights Subject Record shows none.';
       return refuse(403, 'invalid_license', description, 'minor_protection');

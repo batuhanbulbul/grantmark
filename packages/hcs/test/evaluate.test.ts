@@ -285,6 +285,35 @@ describe('evaluate: minors policy (Grantmark decision, stricter than HCS §1.1)'
     expect(result.minorProtectionApplied).toBe(true);
   });
 
+  it('is not bypassed by an unrelated Default Declaration listed first', () => {
+    const setup = persona('lina');
+    const bookClass = 'https://registry.grantmark.example/classes/books';
+    const unrelated =
+      RSL_OPEN +
+      `<hcs:right registry="${GRANTMARK}" registration-id="HCRN-0000-006F-P" issued="2026-09-01T00:00:00Z" subject="work" ` +
+      `subject-scope="literary" subject-class="${bookClass}"><schema type="application/ld+json">` +
+      JSON.stringify({
+        '@context': 'https://schema.org',
+        '@id': bookClass,
+        '@type': 'Collection',
+        additionalType: 'https://humanconsent.org/schemas/book',
+        name: 'Fictional books',
+        description: 'Fictional books used in Grantmark tests.',
+      }) +
+      `</schema><license><permits type="usage">hcs:ai-generate</permits>${LEGAL}</license></hcs:right></rsl>`;
+    const result = run({ ...setup, documents: [setup.registry.publish(unrelated), ...setup.documents] }, { scopes: ['image'] });
+    expect(result.ageStatus).toBe('minor');
+    expect(result.minorProtectionApplied).toBe(true);
+    expect(result.offers).toEqual([]);
+  });
+
+  it('takes the category from the Rights Subject Record when no declaration is found', () => {
+    const setup = persona('lina');
+    const result = run({ ...setup, documents: [] }, { scopes: ['image'] });
+    expect(result.ageStatus).toBe('minor');
+    expect(result.minorProtectionApplied).toBe(true);
+  });
+
   it('does not apply to subjects other than identity', () => {
     const registry = new MockRegistry();
     registry.addSubject('HCSI-0000-0039-Z', { name: 'no birthDate needed' });

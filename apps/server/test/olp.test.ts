@@ -217,6 +217,36 @@ describe('POST /olp/token: refusals and payment', () => {
     expect(services.licenses.requestCount()).toBe(0);
   });
 
+  it('refuses a minor even when an unrelated Default Declaration was published first', async () => {
+    const bookClass = `${config.registryId}/classes/books`;
+    const unrelated =
+      `<rsl xmlns="${RSL_NAMESPACE}" xmlns:hcs="${HCS_NAMESPACE}"><hcs:right registry="${config.registryId}" ` +
+      `registration-id="HCRN-0000-006F-P" issued="2026-09-01T00:00:00Z" subject="work" subject-scope="literary" ` +
+      `subject-class="${bookClass}"><schema type="application/ld+json">` +
+      JSON.stringify({
+        '@context': 'https://schema.org',
+        '@id': bookClass,
+        '@type': 'Collection',
+        additionalType: 'https://humanconsent.org/schemas/book',
+        name: 'Fictional books',
+        description: 'Fictional books used in Grantmark tests.',
+      }) +
+      `</schema><license><permits type="usage">hcs:ai-generate</permits>${LEGAL}</license></hcs:right></rsl>`;
+    clock = new Date('2026-09-20T10:00:00Z');
+    services = createServices(openDatabase(':memory:'), config, () => clock);
+    services.registry.putRegistry({ url: config.registryId, name: 'Grantmark test registry (mock)', authorized: true });
+    services.registry.publish(unrelated);
+    seedPersonas(services.registry, config);
+    services.clients.create('Demo Studio', { clientId: CLIENT.id, secret: CLIENT.secret });
+    app = createApp(services, config);
+    clock = new Date('2026-10-01T12:00:00Z');
+
+    const response = await token({ license: offerOf('HCRN-0000-006A-H'), resource: 'HCRN-0000-006A-H' });
+    expect(response.status).toBe(403);
+    expect(await json(response)).toMatchObject({ error: 'invalid_license', reason_code: 'minor_protection' });
+    expect(services.licenses.requestCount()).toBe(0);
+  });
+
   it('refuses a withdrawn declaration', async () => {
     const response = await token({ license: offerOf('HCRN-0000-006D-M'), resource: 'HCRN-0000-006D-M' });
     expect(response.status).toBe(403);

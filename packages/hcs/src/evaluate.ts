@@ -18,7 +18,7 @@ import { expandGeo } from './countries';
 import { collapse } from './lexical';
 import { checkLifecycle, type LifecycleCode } from './lifecycle';
 import { parseHcsDocument } from './parser';
-import { checkRightsSubjectObject } from './profiles';
+import { checkRightsSubjectObject, profileById } from './profiles';
 import { SUBJECT_SCOPES, type SubjectCategory, type UsageToken } from './vocabulary';
 
 /** HCRN lookup record (§4.3.2). */
@@ -433,17 +433,31 @@ const RANK: Readonly<Record<Decision, number>> = {
   prohibited: 3,
 };
 
+/** The subject category named by a Rights Subject Record's Schema Profile, if it names a known one. */
+function recordCategory(record: unknown): SubjectCategory | undefined {
+  if (typeof record !== 'object' || record === null) return undefined;
+  const additionalType = (record as Record<string, unknown>).additionalType;
+  return typeof additionalType === 'string' ? profileById(additionalType)?.subject : undefined;
+}
+
 export function evaluate(input: EvaluationInput): Evaluation {
   const { subject, registry, use } = input;
   const declarations = evaluateDocuments(input);
 
-  const category: SubjectCategory | undefined = declarations.find((e) => e.declaration !== undefined)?.declaration?.subject;
+  // The category comes from the subject's own record, else from declarations that concern the
+  // subject. Unrelated documents (for example a Default Declaration the subject is not a member
+  // of) must not decide it: that would switch off the minors rule for a person.
+  const record = registry.subjectRecord(subject);
+  const concerning = declarations
+    .filter((e) => e.declaration !== undefined && (e.declaration.subjectId === subject || e.member === true))
+    .map((e) => e.declaration!);
+  const category: SubjectCategory | undefined = recordCategory(record) ?? concerning[0]?.subject;
   const scopes = category === 'mark' ? ['*'] : (use.scopes ?? (category === undefined ? [] : SUBJECT_SCOPES[category]));
 
-  const age = category === 'identity' ? ageStatus(registry.subjectRecord(subject), use.at) : undefined;
+  const identity = category === 'identity' || concerning.some((d) => d.subject === 'identity');
+  const age = identity ? ageStatus(record, use.at) : undefined;
   const policy = input.minorPolicy ?? 'require_adult_evidence';
-  const minorProtection =
-    category === 'identity' && (policy === 'require_adult_evidence' ? age !== 'adult' : age === 'minor');
+  const minorProtection = identity && (policy === 'require_adult_evidence' ? age !== 'adult' : age === 'minor');
 
   const operative = declarations
     .filter((e) => e.operative && (e.declaration?.subjectId === subject || e.member === true))
