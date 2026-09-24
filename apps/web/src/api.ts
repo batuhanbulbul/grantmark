@@ -149,6 +149,24 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+/**
+ * A random value that ties this browser's demo payments to it: every visitor shares the demo
+ * studio's client, so the server asks for this claim before it settles a payment. It lives for
+ * the browser tab, so a reload in the middle of a payment can still finish it.
+ */
+const claim = (() => {
+  const fresh = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const kept = sessionStorage.getItem('grantmark.claim');
+    if (kept !== null && /^[0-9a-f]{48}$/.test(kept)) return kept;
+    const value = fresh();
+    sessionStorage.setItem('grantmark.claim', value);
+    return value;
+  } catch {
+    return fresh();
+  }
+})();
+
 const postJson = (body: unknown): RequestInit => ({
   method: 'POST',
   headers: { 'content-type': 'application/json' },
@@ -162,7 +180,7 @@ export const api = {
     json<Evaluation>('/v1/evaluate', postJson(body)),
 
   async requestLicense(body: LicenseRequestBody): Promise<LicenseOutcome> {
-    const response = await fetch('/v1/demo/licenses', postJson(body));
+    const response = await fetch('/v1/demo/licenses', postJson({ ...body, claim }));
     const data = (await response.json().catch(() => ({}))) as Record<string, any>;
     if (response.status === 200) {
       return {

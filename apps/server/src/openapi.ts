@@ -223,8 +223,38 @@ export function openApiDocument(config: Config) {
       post: {
         tags: ['Demo'],
         summary: 'License requests of the demo studio, run server side (same flow as /olp/token)',
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['hcrn', 'license'] } } } },
-        responses: { 200: json('License token'), 402: error('payment_required'), 403: error('Refused'), 503: error('Demo client not set up') },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['hcrn', 'license'],
+                properties: {
+                  hcrn: { type: 'string' },
+                  license: { type: 'integer', description: '1-based offer number in the declaration' },
+                  scope: { type: 'string' },
+                  place: { type: 'string' },
+                  payer: { type: 'string', description: 'Solana devnet wallet address' },
+                  payment_id: { type: 'string' },
+                  payment_evidence: { type: 'string', description: 'Transaction signature' },
+                  claim: {
+                    type: 'string',
+                    pattern: '^[A-Za-z0-9_-]{16,128}$',
+                    description: 'Required with payer or payment_id: a random value the browser keeps, since all browsers share the demo client',
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: json('License token'),
+          400: error('invalid_request (e.g. a missing claim)'),
+          402: error('payment_required'),
+          403: error('Refused'),
+          503: error('Demo client not set up'),
+        },
       },
     },
     '/health': {

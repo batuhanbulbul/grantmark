@@ -21,7 +21,7 @@ import { newId } from '../ids';
 import type { Client } from '../olp/clients';
 import type { LicenseRequest, LicenseStore } from '../olp/licenses';
 import { resourceHcrn, type LicenseService, type Refusal, type ReasonCode, type TokenForm, type TokenIssued } from '../olp/service';
-import type { PayeeStore, PaymentStore, StoredPayment } from './store';
+import { claimHash, type PayeeStore, type PaymentStore, type StoredPayment } from './store';
 
 /** How long a payment request stays open (also x402's `max_timeout_seconds`). */
 export const PAYMENT_TIMEOUT_SECONDS = 600;
@@ -74,8 +74,11 @@ export class PaymentService {
     this.now = deps.now;
   }
 
-  /** Creates the payment for a paid license request once the payer's wallet is known. */
-  async start(request: LicenseRequest, payer: string | undefined): Promise<StartOutcome> {
+  /**
+   * Creates the payment for a paid license request once the payer's wallet is known. A `claim`
+   * (a secret the caller keeps) is then needed to settle it, on top of the client credentials.
+   */
+  async start(request: LicenseRequest, payer: string | undefined, claim?: string): Promise<StartOutcome> {
     if (payer === undefined) return { kind: 'needs_payer', request };
     if (!isSolanaAddress(payer)) return refuse(400, 'invalid_request', 'payer must be a Solana wallet address (devnet)');
     const wallet = this.payees.rightsHolderWallet(request.hcrn);
@@ -114,14 +117,15 @@ export class PaymentService {
       console.error('could not build the payment on devnet', error);
       return { kind: 'unavailable', description: 'Solana devnet is not reachable right now; try again shortly.' };
     }
-    const payment = this.payments.create({ id, licenseRequestId: request.id, clientId: request.clientId, request: paymentRequest, expiresAt });
+    const payment = this.payments.create({ id, licenseRequestId: request.id, clientId: request.clientId, request: paymentRequest, expiresAt, claim });
     return { kind: 'payment', payment };
   }
 
   /** Handles a /olp/token retry that carries `payment_id` (and usually `payment_evidence`). */
-  async settle(client: Client, form: TokenForm): Promise<SettleOutcome> {
+  async settle(client: Client, form: TokenForm, claim?: string): Promise<SettleOutcome> {
     const payment = form.payment_id === undefined ? undefined : this.payments.get(form.payment_id);
-    if (payment === undefined || payment.clientId !== client.clientId) {
+    const claimed = payment?.claimSha256 === undefined || (claim !== undefined && claimHash(claim) === payment.claimSha256);
+    if (payment === undefined || payment.clientId !== client.clientId || !claimed) {
       return refuse(400, 'invalid_request', 'payment_id does not name a payment of this client');
     }
     const request = this.licenses.request(payment.licenseRequestId)!;

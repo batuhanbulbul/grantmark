@@ -17,6 +17,15 @@ describe('api.requestLicense', () => {
     expect(fetchMock).toHaveBeenCalledWith('/v1/demo/licenses', expect.objectContaining({ method: 'POST' }));
   });
 
+  it('sends the same random claim with every request, tying demo payments to this browser', async () => {
+    const fetchMock = mockFetch(402, { error: 'payment_required', payment: { status: 'requires_payment', accepts: [] } });
+    await api.requestLicense({ hcrn: 'HCRN-0000-0068-F', license: 1, payer: 'wallet' });
+    await api.requestLicense({ hcrn: 'HCRN-0000-0068-F', license: 1, payment_id: 'pay_1' });
+    const claims = fetchMock.mock.calls.map((call) => JSON.parse(String((call as unknown as [string, RequestInit])[1].body)).claim);
+    expect(claims[0]).toMatch(/^[0-9a-f]{48}$/);
+    expect(claims[1]).toBe(claims[0]);
+  });
+
   it('returns a payment outcome for 402', async () => {
     mockFetch(402, { error: 'payment_required', error_description: 'pay', payment: { id: 'pay_1', status: 'requires_payment', accepts: [] } });
     const outcome = await api.requestLicense({ hcrn: 'HCRN-0000-0068-F', license: 1 });

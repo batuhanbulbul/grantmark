@@ -181,6 +181,15 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE licenses ADD COLUMN license_canonical TEXT NOT NULL DEFAULT '';
     `,
   },
+  {
+    id: 6,
+    name: 'payment claims',
+    sql: `
+      -- SHA-256 of a secret the payment's starter keeps. Set for the shared demo client, whose
+      -- browsers cannot tell each other apart by client credentials.
+      ALTER TABLE payments ADD COLUMN claim_sha256 TEXT;
+    `,
+  },
 ];
 
 /** Applies pending migrations in order, each in its own transaction. Returns how many ran. */

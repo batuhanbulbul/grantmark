@@ -62,9 +62,16 @@ export interface OlpServices {
 
 /**
  * Runs a token request (RSL §5.4 plus Grantmark's payment extension) for an authenticated client
- * and turns the outcome into the HTTP response. Shared by /olp/token and the demo studio.
+ * and turns the outcome into the HTTP response. Shared by /olp/token and the demo studio, which
+ * passes a `claim` so that browsers sharing its client cannot settle each other's payments.
  */
-export async function respondToTokenRequest(c: Context, services: OlpServices, client: Client, form: TokenForm): Promise<Response> {
+export async function respondToTokenRequest(
+  c: Context,
+  services: OlpServices,
+  client: Client,
+  form: TokenForm,
+  options: { claim?: string | undefined } = {},
+): Promise<Response> {
   const { licenses, licensing, paymentService } = services;
 
   const tokenResponse = (outcome: TokenIssued) => {
@@ -100,12 +107,12 @@ export async function respondToTokenRequest(c: Context, services: OlpServices, c
     }
   };
 
-  if (form.payment_id !== undefined) return settled(await paymentService.settle(client, form));
+  if (form.payment_id !== undefined) return settled(await paymentService.settle(client, form, options.claim));
   const outcome = await licensing.requestToken(client, form);
   if (outcome.kind === 'token') return tokenResponse(outcome);
   if (outcome.kind === 'error') return settled(outcome);
 
-  const started = await paymentService.start(outcome.request, form.payer);
+  const started = await paymentService.start(outcome.request, form.payer, options.claim);
   if (started.kind === 'error') return settled(started);
   if (started.kind === 'unavailable') return apiError(c, 503, 'temporarily_unavailable', started.description, {}, NO_STORE);
   if (started.kind === 'payment') return paymentRequired(started.payment, 'This license requires payment before a token can be issued.');

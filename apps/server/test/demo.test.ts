@@ -9,6 +9,8 @@ import { seedPersonas } from '../src/seed';
 const config = loadConfig({ PUBLIC_BASE_URL: 'https://grantmark.test', REGISTRY_ID: 'https://grantmark.test/registry', LICENSE_SERVER_URL: 'https://grantmark.test/olp' });
 const PAYER = '9Qt7tfh823nacfZWuRcopkM399JtzELspLTEZW3qMk3t';
 const SIGNATURE = '3dfrHDr5si57QTrXMR2w6Q33Np1A2EudDEU2WebaXjuz1y8KT9A8UokSCJD3XCr1rvaRBhJ88o4x7GKSxVMUygPg';
+/** The random value a browser keeps for its own demo payments. */
+const CLAIM = 'c1a1m-0f-th1s-br0wser-7f3a9c';
 const MIRA = 'HCRN-0000-0068-F';
 
 class FakeRpc implements SolanaRpc {
@@ -114,21 +116,43 @@ describe('POST /v1/evaluate', () => {
 
 describe('POST /v1/demo/licenses (the demo studio, server side)', () => {
   it('asks for payment, then issues the license once paid', async () => {
-    const first = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payer: PAYER });
+    const first = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payer: PAYER, claim: CLAIM });
     expect(first.status).toBe(402);
     const { payment } = await json(first);
     expect(payment.accepts[0].transaction.length).toBeGreaterThan(100);
 
     rpc.finalized.set(SIGNATURE, parsedTransactionFor(services.payments.get(payment.id)!.request, { signature: SIGNATURE, paidAt: new Date(clock.getTime() + 5000) }));
-    const paid = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payment_id: payment.id, payment_evidence: SIGNATURE });
+    const paid = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payment_id: payment.id, payment_evidence: SIGNATURE, claim: CLAIM });
     expect(paid.status).toBe(200);
     const body = await json(paid);
     expect(body).toMatchObject({ token_type: 'License', subject_scope: 'image' });
     expect(services.licenses.license(body.license_id)?.clientId).toBe('demo-studio');
   });
 
+  it("does not let another browser settle a payment it did not start (the demo client is shared)", async () => {
+    const first = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payer: PAYER, claim: CLAIM });
+    const { payment } = await json(first);
+    rpc.finalized.set(SIGNATURE, parsedTransactionFor(services.payments.get(payment.id)!.request, { signature: SIGNATURE, paidAt: new Date(clock.getTime() + 5000) }));
+    const settle = (claim?: string) =>
+      postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payment_id: payment.id, payment_evidence: SIGNATURE, ...(claim === undefined ? {} : { claim }) });
+
+    expect((await settle('another-browser-claim-4b1e')).status).toBe(400);
+    expect((await settle()).status).toBe(400);
+    expect(services.payments.get(payment.id)?.status).toBe('requires_payment');
+    expect((await settle(CLAIM)).status).toBe(200);
+    // Once settled, the payment id from the public receipt still gives nobody else a token.
+    expect((await settle('another-browser-claim-4b1e')).status).toBe(400);
+  });
+
+  it('requires a claim before it starts a payment', async () => {
+    const response = await postJson('/v1/demo/licenses', { hcrn: MIRA, license: 1, scope: 'image', payer: PAYER });
+    expect(response.status).toBe(400);
+    expect(await json(response)).toMatchObject({ error: 'invalid_request' });
+    expect(services.payments.open()).toEqual([]);
+  });
+
   it('refuses a minor exactly like /olp/token', async () => {
-    const response = await postJson('/v1/demo/licenses', { hcrn: 'HCRN-0000-006A-H', license: 1, payer: PAYER });
+    const response = await postJson('/v1/demo/licenses', { hcrn: 'HCRN-0000-006A-H', license: 1, payer: PAYER, claim: CLAIM });
     expect(response.status).toBe(403);
     expect(await json(response)).toMatchObject({ reason_code: 'minor_protection' });
   });

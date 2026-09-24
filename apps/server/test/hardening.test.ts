@@ -43,8 +43,13 @@ function setup(env: Record<string, string> = {}) {
   return { app: createApp(services, config, { webDist: 'no-such-folder' }), rpc, services };
 }
 
+const CLAIM = 'hardening-test-browser-claim';
 const demo = (app: ReturnType<typeof setup>['app'], body: object, headers: Record<string, string> = {}) =>
-  app.request('/v1/demo/licenses', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
+  app.request('/v1/demo/licenses', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify({ claim: CLAIM, ...body }),
+  });
 
 describe('when devnet is unreachable', () => {
   it('answers 503 instead of failing when a payment is started', async () => {

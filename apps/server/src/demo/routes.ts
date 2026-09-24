@@ -37,6 +37,8 @@ function parsedDeclaration(registry: RegistryStore, hcrn: string) {
   return parsed.ok ? { stored, right: parsed.document.rights[0]!, check: checkDocument(parsed.document)[0]! } : undefined;
 }
 
+const CLAIM = /^[A-Za-z0-9_-]{16,128}$/;
+
 export function demoRoutes(services: DemoServices, config: Config, now: () => Date, demoClientId: string): Hono {
   const { registry, clients } = services;
   const base = config.publicBaseUrl;
@@ -137,9 +139,15 @@ export function demoRoutes(services: DemoServices, config: Config, now: () => Da
     if (offer === undefined) return apiError(c, 400, 'invalid_request', 'license must be the number of an offer in the declaration');
 
     const text = (name: string) => (typeof body[name] === 'string' ? (body[name] as string) : undefined);
+    // Every browser shares the demo client, so a payment is tied to a secret its browser keeps.
+    const claim = text('claim');
+    const paying = text('payer') !== undefined || text('payment_id') !== undefined;
+    if (paying && (claim === undefined || !CLAIM.test(claim))) {
+      return apiError(c, 400, 'invalid_request', 'claim is required for payments: a random value (16-128 letters, digits, - or _) this browser keeps');
+    }
     const stored = registry.declaration(body.hcrn)!;
     const license = new TextDecoder().decode(stored.content).slice(offer.element.start, offer.element.end);
-    return respondToTokenRequest(c, services, client, {
+    const form = {
       grant_type: 'client_credentials',
       license,
       resource: body.hcrn,
@@ -148,7 +156,8 @@ export function demoRoutes(services: DemoServices, config: Config, now: () => Da
       payer: text('payer'),
       payment_id: text('payment_id'),
       payment_evidence: text('payment_evidence'),
-    });
+    };
+    return respondToTokenRequest(c, services, client, form, { claim });
   });
 
   return app;

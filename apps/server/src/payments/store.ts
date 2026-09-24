@@ -3,6 +3,7 @@
  * constraint on provider and transaction), and a license request only one successful payment.
  */
 
+import { createHash } from 'node:crypto';
 import type { DatabaseSync } from 'node:sqlite';
 import type { PaymentStatus, Receipt, SolanaPaymentRequest } from '@grantmark/payments';
 
@@ -21,7 +22,12 @@ export interface StoredPayment {
   readonly reason?: string | undefined;
   readonly expiresAt: Date;
   readonly createdAt: Date;
+  /** SHA-256 (hex) of the claim that started the payment, when one was required. */
+  readonly claimSha256?: string | undefined;
 }
+
+/** The stored form of a payment claim. */
+export const claimHash = (claim: string) => createHash('sha256').update(claim).digest('hex');
 
 type Row = Record<string, unknown>;
 const optional = (value: unknown) => (typeof value === 'string' ? value : undefined);
@@ -40,6 +46,7 @@ function toPayment(row: Row): StoredPayment {
     reason: optional(row.reason),
     expiresAt: new Date(String(row.expires_at)),
     createdAt: new Date(String(row.created_at)),
+    claimSha256: optional(row.claim_sha256),
   };
 }
 
@@ -52,14 +59,32 @@ export class PaymentStore {
     this.now = now;
   }
 
-  create(input: { id: string; licenseRequestId: string; clientId: string; request: SolanaPaymentRequest; expiresAt: Date }): StoredPayment {
+  create(input: {
+    id: string;
+    licenseRequestId: string;
+    clientId: string;
+    request: SolanaPaymentRequest;
+    expiresAt: Date;
+    claim?: string | undefined;
+  }): StoredPayment {
     const now = this.now().toISOString();
     this.db
       .prepare(
-        `INSERT INTO payments (id, license_request_id, client_id, provider, status, request_json, expires_at, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'requires_payment', ?, ?, ?, ?)`,
+        `INSERT INTO payments (id, license_request_id, client_id, provider, status, request_json, expires_at, created_at, updated_at,
+           claim_sha256)
+         VALUES (?, ?, ?, ?, 'requires_payment', ?, ?, ?, ?, ?)`,
       )
-      .run(input.id, input.licenseRequestId, input.clientId, input.request.provider, JSON.stringify(input.request), input.expiresAt.toISOString(), now, now);
+      .run(
+        input.id,
+        input.licenseRequestId,
+        input.clientId,
+        input.request.provider,
+        JSON.stringify(input.request),
+        input.expiresAt.toISOString(),
+        now,
+        now,
+        input.claim === undefined ? null : claimHash(input.claim),
+      );
     return this.get(input.id)!;
   }
 
