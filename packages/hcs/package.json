@@ -1,0 +1,11 @@
+{
+  "name": "@grantmark/hcs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Parser, evaluator and identifier tools for the Human Consent Standard 1.0 Draft (prototype).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
