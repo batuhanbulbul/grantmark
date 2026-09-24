@@ -8,6 +8,7 @@ import { HCS_NAMESPACE, isValidHcsId } from '@grantmark/hcs';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { Config } from '../config';
+import { apiError } from '../http';
 import { declarationUrl, subjectRecordUrl } from './view';
 import { PublishError, type RegistryStore } from './store';
 
@@ -16,10 +17,6 @@ export const MOCK_NOTICE =
   'Governance Board; identifiers are from the HCS reserved test range (HCS 1.0 Draft §4.6).';
 
 const MAX_DECLARATION_BYTES = 1_048_576;
-
-export function apiError(c: Context, status: 400 | 401 | 404 | 500, error: string, description: string) {
-  return c.json({ error, error_description: description }, status);
-}
 
 const escapeXml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

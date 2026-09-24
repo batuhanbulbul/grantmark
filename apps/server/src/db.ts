@@ -67,6 +67,61 @@ export const MIGRATIONS: readonly Migration[] = [
         BEGIN SELECT RAISE(ABORT, 'events are append-only'); END;
     `,
   },
+  {
+    id: 2,
+    name: 'license server',
+    sql: `
+      CREATE TABLE clients (
+        client_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        secret_hash TEXT NOT NULL, -- scrypt; the secret itself is never stored
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE signing_keys (
+        kid TEXT PRIMARY KEY,
+        private_jwk TEXT NOT NULL,
+        public_jwk TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        active INTEGER NOT NULL CHECK (active IN (0, 1))
+      );
+
+      CREATE TABLE license_requests (
+        id TEXT PRIMARY KEY,
+        client_id TEXT NOT NULL REFERENCES clients (client_id),
+        hcrn TEXT NOT NULL,
+        hcsi TEXT NOT NULL,
+        declaration_sha256 TEXT NOT NULL,
+        license_xml TEXT NOT NULL, -- the offer as published
+        license_index INTEGER NOT NULL,
+        usage TEXT NOT NULL,
+        subject_scope TEXT NOT NULL,
+        place TEXT,
+        amount_value TEXT,
+        amount_currency TEXT,
+        state TEXT NOT NULL CHECK (state IN ('open', 'requires_payment', 'licensed')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE licenses (
+        id TEXT PRIMARY KEY,
+        license_request_id TEXT NOT NULL UNIQUE REFERENCES license_requests (id),
+        client_id TEXT NOT NULL REFERENCES clients (client_id),
+        hcrn TEXT NOT NULL,
+        hcsi TEXT NOT NULL,
+        usage TEXT NOT NULL,
+        subject_scope TEXT NOT NULL,
+        place TEXT,
+        license_xml TEXT NOT NULL,
+        declaration_sha256 TEXT NOT NULL,
+        valid_from TEXT NOT NULL,
+        valid_until TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active', 'revoked')),
+        created_at TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
 /** Applies pending migrations in order, each in its own transaction. Returns how many ran. */
