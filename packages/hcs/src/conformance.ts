@@ -10,6 +10,7 @@
  * certification does not affect whether a declaration is operative (§3.3).
  */
 
+import { isCountryCode } from './countries';
 import { isValidHcsId } from './ids';
 import {
   collapse,
@@ -291,7 +292,7 @@ function checkTypedTokens(
       }
       result.usage = tokens as UsageToken[];
     } else {
-      const valid = type === 'user' ? (t: string) => RSL_USER_TOKENS.includes(t) || isQName(t) : (t: string) => /^([A-Z]{2}|EU)$/.test(t);
+      const valid = type === 'user' ? (t: string) => RSL_USER_TOKENS.includes(t) || isQName(t) : (t: string) => t === 'EU' || isCountryCode(t);
       const invalid = tokens.filter((t) => !valid(t));
       if (invalid.length > 0) {
         report('invalid_element_value', rule, path, `${type} token ${invalid.join(', ')} is not valid`);
@@ -547,7 +548,7 @@ function checkRight(document: HcsDocument, right: HcsRight, report: Report, warn
   const registrationId = read('registration-id', 'HCS §3.1.2', asHcrn, 'a valid HCRN', true);
   const issued = read('issued', 'HCS §3.1.3', asTimestamp, 'a Timestamp', true);
   const subject = read('subject', 'HCS §3.1.6.1', asOneOf(SUBJECT_CATEGORIES), SUBJECT_CATEGORIES.join(', '), true);
-  const territory = read('territory', 'HCS §3.1.6.7', asList((c) => /^[A-Z]{2}$/.test(c)), 'a list of ISO 3166-1 alpha-2 codes');
+  const territory = read('territory', 'HCS §3.1.6.7', asList(isCountryCode), 'a list of officially assigned ISO 3166-1 alpha-2 codes');
   const subjectId = read('subject-id', 'HCS §3.1.4', asHcsi, 'a valid HCSI');
   const subjectClass = read('subject-class', 'HCS §3.1.5', asHttps, 'an absolute HTTPS URL');
   const status = read('status', 'HCS §3.1.7.1', asOneOf(DECLARATION_STATUSES), DECLARATION_STATUSES.join(', ')) ?? 'active';

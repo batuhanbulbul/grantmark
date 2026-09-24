@@ -20,6 +20,12 @@ describe('ageStatus', () => {
     expect(ageStatus(record('2008-10'), on('2026-10-31T00:00:00Z'))).toBe('adult');
     expect(ageStatus(record('2008'), on('2026-12-30T00:00:00Z'))).toBe('minor');
     expect(ageStatus(record('2008'), on('2026-12-31T00:00:00Z'))).toBe('adult');
+    expect(ageStatus(record('2007-02'), on('2025-02-27T00:00:00Z'))).toBe('minor');
+    expect(ageStatus(record('2007-02'), on('2025-02-28T00:00:00Z'))).toBe('adult');
+  });
+
+  it('rejects February 29 in a common year', () => {
+    expect(ageStatus(record('2007-02-29'), on('2026-10-12T00:00:00Z'))).toBe('unknown');
   });
 
   it('is unknown without a usable birthDate', () => {
