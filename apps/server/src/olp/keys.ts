@@ -93,6 +93,20 @@ export class KeyStore {
       .sign(privateKey);
   }
 
+  /** The claims of a receipt signed by this server, or undefined. */
+  async verifyReceipt(receipt: string): Promise<JWTPayload | undefined> {
+    try {
+      const { payload } = await jwtVerify(receipt, createLocalJWKSet(await this.jwks()), {
+        issuer: this.issuer,
+        algorithms: ['ES256'],
+        typ: RECEIPT_TYPE,
+      });
+      return payload;
+    } catch {
+      return undefined;
+    }
+  }
+
   /** The verified claims, or undefined for any invalid, expired or foreign token. */
   async verify(token: string, at: Date): Promise<JWTPayload | undefined> {
     try {

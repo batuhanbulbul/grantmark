@@ -5,6 +5,7 @@ import { Hono } from 'hono';
 import type { Config } from './config';
 import { apiError } from './http';
 import { licenseRoutes } from './licenses/routes';
+import { verifyRoutes } from './licenses/verify';
 import { ClientStore } from './olp/clients';
 import { KeyStore } from './olp/keys';
 import { LicenseStore } from './olp/licenses';
@@ -26,6 +27,7 @@ export interface Services {
   readonly payments: PaymentStore;
   readonly paymentService: PaymentService;
   readonly stamper: Stamper;
+  readonly provider: SolanaUsdcDevnet;
   /** Certificates and trust anchors for C2PA signing and verification (test PKI). */
   readonly signing: SigningMaterial;
   readonly now: () => Date;
@@ -62,6 +64,7 @@ export function createServices(
     payments,
     paymentService: new PaymentService({ payments, payees, licenses, licensing, provider, config, now }),
     stamper: new Stamper(signing),
+    provider,
     signing,
     now,
   };
@@ -73,6 +76,7 @@ export function createApp(services: Services, config: Config): Hono {
   app.route('/', olpRoutes(services));
   app.route('/', paymentRoutes(services));
   app.route('/', licenseRoutes(services, config, services.now));
+  app.route('/', verifyRoutes(services, config, services.now));
   app.notFound((c) => apiError(c, 404, 'not_found', `no route for ${c.req.method} ${c.req.path}`));
   app.onError((error, c) => {
     console.error(error);

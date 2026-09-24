@@ -1,10 +1,6 @@
 /**
- * Public license records, receipts, and stamping.
- *
- * GET /v1/licenses/:id is the consent authority that stamped images point to (their
- * `cawg.consent` reference). It answers the minimum set CAWG recommends for a consent authority:
- * who declared, what is granted, scope, compensation, term, current status and revocability, and
- * the binding to the assets and the subject. It is public and grants nothing.
+ * Public license records (GET /v1/licenses/:id), receipts, and stamping. The record is the
+ * consent authority that stamped images point to; see record.ts.
  */
 
 import { createHash } from 'node:crypto';
@@ -15,100 +11,28 @@ import { bodyLimit } from 'hono/body-limit';
 import type { Config } from '../config';
 import { apiError } from '../http';
 import type { KeyStore } from '../olp/keys';
-import type { License, LicenseStore } from '../olp/licenses';
-import type { LicenseService } from '../olp/service';
-import type { PaymentStore } from '../payments/store';
-import type { RegistryStore } from '../registry/store';
-import { declarationUrl, subjectRecordUrl } from '../registry/view';
+import type { License } from '../olp/licenses';
+import { licenseRecord, licenseStatus, type RecordServices } from './record';
 
-const STAMP_TYPES: readonly StampMimeType[] = ['image/png', 'image/jpeg', 'image/webp'];
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+export const STAMP_TYPES: readonly StampMimeType[] = ['image/png', 'image/jpeg', 'image/webp'];
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-export const REVOCABILITY =
-  'The rights holder can withdraw or change the declaration at any time. From then on new uses are no longer ' +
-  'permitted (HCS 1.0 Draft §1.3); uses made before stay licensed as of their time.';
-
-interface LicenseServices {
-  readonly registry: RegistryStore;
-  readonly licenses: LicenseStore;
-  readonly licensing: LicenseService;
-  readonly payments: PaymentStore;
+interface LicenseServices extends RecordServices {
   readonly keys: KeyStore;
   readonly stamper: Stamper;
 }
 
 export function licenseRoutes(services: LicenseServices, config: Config, now: () => Date): Hono {
-  const { registry, licenses, licensing, payments, keys, stamper } = services;
+  const { licenses, licensing, keys, stamper } = services;
   const base = config.publicBaseUrl;
   const app = new Hono();
 
-  const status = (license: License) =>
-    license.status === 'revoked' ? 'revoked' : now() >= license.validUntil ? 'expired' : 'active';
-
-  function record(license: License) {
-    const request = licenses.request(license.requestId);
-    const payment = payments.succeededForRequest(license.requestId);
-    const declaration = registry.declaration(license.hcrn);
-    const subject = registry.subject(license.hcsi)?.record as { name?: unknown } | undefined;
-    const refusal = status(license) === 'active' ? licensing.checkCurrent(license) : undefined;
-    return {
-      license_id: license.id,
-      status: status(license),
-      current_permission:
-        status(license) !== 'active'
-          ? { permitted: false, reason: `the license is ${status(license)}` }
-          : refusal === undefined
-            ? { permitted: true }
-            : { permitted: false, reason: refusal.description },
-      declaring_party: {
-        registry: declaration?.registry,
-        hcrn: license.hcrn,
-        declaration_url: declarationUrl(base, license.hcrn),
-        declaration_uri: CANONICAL_ID_BASE + license.hcrn,
-        declaration_sha256: license.declarationSha256,
-        rights_subject: {
-          hcsi: license.hcsi,
-          name: typeof subject?.name === 'string' ? subject.name : undefined,
-          record_url: subjectRecordUrl(base, license.hcsi),
-        },
-      },
-      licensee: { client_id: license.clientId },
-      grant: {
-        usage: license.usage,
-        subject_scope: license.subjectScope,
-        ...(license.place === undefined ? {} : { place: license.place }),
-        license: license.licenseXml,
-      },
-      compensation: {
-        amount: request?.amount ?? null,
-        payment:
-          payment === undefined
-            ? null
-            : {
-                provider: payment.provider,
-                network: payment.request.network,
-                asset: payment.request.asset,
-                transaction_signature: payment.externalRef,
-                explorer_url: `https://explorer.solana.com/tx/${payment.externalRef}?cluster=devnet`,
-                memo: payment.request.memo,
-                paid_to: payment.request.splits.map((s) => ({ role: s.role, wallet: s.wallet, amount: s.amount })),
-              },
-      },
-      term: { valid_from: license.validFrom.toISOString(), valid_until: license.validUntil.toISOString() },
-      revocability: REVOCABILITY,
-      binding: {
-        subject: license.hcsi,
-        assets: licenses.assets(license.id).map((a) => ({ sha256: a.sha256, mime: a.mime, mode: a.mode, stamped_at: a.createdAt.toISOString() })),
-      },
-      receipt_url: `${base}/v1/licenses/${license.id}/receipt`,
-      notice: 'Grantmark prototype on the HCS 1.0 Draft. Devnet and test mode only; all people are fictional.',
-    };
-  }
+  const status = (license: License) => licenseStatus(license, now());
 
   app.get('/v1/licenses/:id', (c) => {
     const license = licenses.license(c.req.param('id'));
     if (license === undefined) return apiError(c, 404, 'not_found', 'no such license');
-    return c.json(record(license), 200, { 'cache-control': 'no-cache' });
+    return c.json(licenseRecord(services, config, now(), license), 200, { 'cache-control': 'no-cache' });
   });
 
   app.get('/v1/licenses/:id/receipt', (c) => {
