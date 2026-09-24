@@ -153,6 +153,24 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE UNIQUE INDEX payments_one_success_per_request ON payments (license_request_id) WHERE status = 'succeeded';
     `,
   },
+  {
+    id: 4,
+    name: 'receipts and stamped assets',
+    sql: `
+      ALTER TABLE licenses ADD COLUMN receipt_jws TEXT;
+
+      CREATE TABLE assets (
+        id INTEGER PRIMARY KEY,
+        license_id TEXT NOT NULL REFERENCES licenses (id),
+        sha256 TEXT NOT NULL,
+        mime TEXT NOT NULL,
+        mode TEXT NOT NULL CHECK (mode IN ('embedded', 'sidecar')),
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX assets_by_license ON assets (license_id);
+      CREATE INDEX assets_by_hash ON assets (sha256);
+    `,
+  },
 ];
 
 /** Applies pending migrations in order, each in its own transaction. Returns how many ran. */

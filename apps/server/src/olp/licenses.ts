@@ -45,6 +45,15 @@ export interface License {
   readonly validUntil: Date;
   readonly status: 'active' | 'revoked';
   readonly createdAt: Date;
+  /** The signed public receipt. */
+  readonly receiptJws?: string | undefined;
+}
+
+export interface StampedAsset {
+  readonly sha256: string;
+  readonly mime: string;
+  readonly mode: 'embedded' | 'sidecar';
+  readonly createdAt: Date;
 }
 
 type Row = Record<string, unknown>;
@@ -86,6 +95,7 @@ function toLicense(row: Row): License {
     validUntil: new Date(String(row.valid_until)),
     status: row.status === 'revoked' ? 'revoked' : 'active',
     createdAt: new Date(String(row.created_at)),
+    receiptJws: optional(row.receipt_jws),
   };
 }
 
@@ -190,6 +200,30 @@ export class LicenseStore {
   license(id: string): License | undefined {
     const row = this.db.prepare('SELECT * FROM licenses WHERE id = ?').get(id) as Row | undefined;
     return row && toLicense(row);
+  }
+
+  setReceipt(licenseId: string, receiptJws: string): void {
+    this.db.prepare('UPDATE licenses SET receipt_jws = ? WHERE id = ? AND receipt_jws IS NULL').run(receiptJws, licenseId);
+  }
+
+  addAsset(licenseId: string, asset: { sha256: string; mime: string; mode: 'embedded' | 'sidecar' }): void {
+    this.db
+      .prepare('INSERT INTO assets (license_id, sha256, mime, mode, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(licenseId, asset.sha256, asset.mime, asset.mode, this.now().toISOString());
+  }
+
+  assets(licenseId: string): StampedAsset[] {
+    return (this.db.prepare('SELECT * FROM assets WHERE license_id = ? ORDER BY id').all(licenseId) as Row[]).map((row) => ({
+      sha256: String(row.sha256),
+      mime: String(row.mime),
+      mode: row.mode === 'sidecar' ? 'sidecar' : 'embedded',
+      createdAt: new Date(String(row.created_at)),
+    }));
+  }
+
+  /** Licenses under which an asset with this hash was stamped. */
+  licensesForAsset(sha256: string): string[] {
+    return (this.db.prepare('SELECT DISTINCT license_id FROM assets WHERE sha256 = ?').all(sha256) as Row[]).map((row) => String(row.license_id));
   }
 
   licenseForRequest(requestId: string): License | undefined {

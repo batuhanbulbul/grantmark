@@ -32,6 +32,7 @@ import { registryView, subjectDocuments } from '../registry/view';
 import type { RegistryStore, StoredDeclaration } from '../registry/store';
 import type { Client } from './clients';
 import type { KeyStore } from './keys';
+import { createHash } from 'node:crypto';
 import type { License, LicenseRequest, LicenseStore } from './licenses';
 
 /** Default term of a license; never beyond the declaration's valid-until. */
@@ -72,6 +73,18 @@ export interface PaymentRequired {
 export type TokenOutcome = TokenIssued | PaymentRequired | Refusal;
 
 export type TokenForm = Readonly<Record<string, string | undefined>>;
+
+/** The payment a receipt binds a license to. */
+export interface ReceiptPayment {
+  readonly provider: string;
+  readonly network: string;
+  readonly asset: string;
+  readonly transactionSignature: string;
+  readonly amount: { readonly value: string; readonly currency: string };
+  readonly memo: string;
+  readonly commitment: Readonly<Record<string, unknown>>;
+  readonly paidAt: string;
+}
 
 export type Introspection =
   | { readonly active: false }
@@ -208,11 +221,11 @@ export class LicenseService {
    * Issues the license for a request whose conditions are met (for paid offers, once payment
    * is verified). Re-checks the current declaration, including the minors rule, first.
    */
-  async issue(requestId: string): Promise<TokenIssued | Refusal> {
+  async issue(requestId: string, payment?: ReceiptPayment): Promise<TokenIssued | Refusal> {
     const request = this.licenses.request(requestId);
     if (request === undefined) return refuse(400, 'invalid_request', `unknown license request ${requestId}`);
     const existing = this.licenses.licenseForRequest(requestId);
-    if (existing !== undefined) return this.tokenFor(existing, {});
+    if (existing !== undefined) return this.tokenFor(await this.withReceipt(existing, payment), {});
 
     const loaded = this.load(request.hcrn);
     if (isRefusal(loaded)) return loaded;
@@ -238,7 +251,44 @@ export class LicenseService {
       subjectScope: decided.scopes,
       declarationSha256: loaded.stored.sha256,
     });
-    return this.tokenFor(license, decided.excluded);
+    return this.tokenFor(await this.withReceipt(license, payment), decided.excluded);
+  }
+
+  /** Signs and stores the license's public receipt if it has none yet. */
+  private async withReceipt(license: License, payment: ReceiptPayment | undefined): Promise<License> {
+    if (license.receiptJws !== undefined) return license;
+    const claims = {
+      jti: license.id,
+      sub: license.clientId,
+      license: {
+        id: license.id,
+        hcrn: license.hcrn,
+        hcsi: license.hcsi,
+        usage: license.usage,
+        subject_scope: license.subjectScope,
+        ...(license.place === undefined ? {} : { place: license.place }),
+        valid_from: license.validFrom.toISOString(),
+        valid_until: license.validUntil.toISOString(),
+        declaration_sha256: license.declarationSha256,
+        license_sha256: createHash('sha256').update(license.licenseXml).digest('hex'),
+      },
+      ...(payment === undefined
+        ? {}
+        : {
+            payment: {
+              provider: payment.provider,
+              network: payment.network,
+              asset: payment.asset,
+              transaction_signature: payment.transactionSignature,
+              amount: payment.amount,
+              memo: payment.memo,
+              commitment: payment.commitment,
+              paid_at: payment.paidAt,
+            },
+          }),
+    };
+    this.licenses.setReceipt(license.id, await this.keys.signReceipt(claims, license.createdAt));
+    return this.licenses.license(license.id)!;
   }
 
   /** RSL §5.5 introspection, re-checking the current declaration for new uses (HCS §1.3). */
@@ -265,8 +315,8 @@ export class LicenseService {
     if (resourceHcrn(resource) !== license.hcrn) {
       return { ...description, permitted: false, reason: 'License does not cover this resource.' };
     }
-    const reason = this.currentRefusal(license);
-    return reason === undefined ? { ...description, permitted: true } : { ...description, permitted: false, reason };
+    const refusal = this.checkCurrent(license);
+    return refusal === undefined ? { ...description, permitted: true } : { ...description, permitted: false, reason: refusal.description };
   }
 
   private async tokenFor(license: License, excluded: Readonly<Record<string, string>>): Promise<TokenIssued | Refusal> {
@@ -370,17 +420,23 @@ export class LicenseService {
     return { usage, scopes: licensed, excluded };
   }
 
-  /** Why an issued license no longer permits new uses, or undefined if it still does. */
-  private currentRefusal(license: License): string | undefined {
+  /**
+   * Why an issued license no longer permits new uses (withdrawal, minor protection, a new
+   * conflict or prohibition), or undefined if it still does. Uses before a change stay licensed
+   * as of their time (HCS §1.3).
+   */
+  checkCurrent(license: License): Refusal | undefined {
     const loaded = this.load(license.hcrn);
-    if (isRefusal(loaded)) return loaded.description;
+    if (isRefusal(loaded)) return loaded;
     const evaluations = this.evaluations(loaded, license.usage, license.subjectScope, license.place);
     const blocked = this.blocked(loaded, evaluations);
-    if (blocked !== undefined) return blocked.description;
+    if (blocked !== undefined) return blocked;
     for (const scope of license.subjectScope) {
       for (const evaluation of evaluations) {
         const result = evaluation.scopes.find((s) => s.scope === scope);
-        if (!permits(result)) return result?.explanation ?? `${scope} is no longer permitted`;
+        if (!permits(result)) {
+          return refuse(403, 'invalid_license', result?.explanation ?? `${scope} is no longer permitted`, 'not_permitted');
+        }
       }
     }
     return undefined;

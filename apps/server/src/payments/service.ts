@@ -186,7 +186,18 @@ export class PaymentService {
   }
 
   private async issue(payment: StoredPayment): Promise<SettleOutcome> {
-    const outcome = await this.licensing.issue(payment.licenseRequestId);
+    const r = payment.request;
+    const receiptPayment = {
+      provider: r.provider,
+      network: r.network,
+      asset: r.asset,
+      transactionSignature: payment.externalRef!,
+      amount: this.licenses.request(payment.licenseRequestId)!.amount!,
+      memo: r.memo,
+      commitment: r.commitment,
+      paidAt: payment.receipt?.paidAt ?? this.now().toISOString(),
+    };
+    const outcome = await this.licensing.issue(payment.licenseRequestId, receiptPayment);
     // A refusal after payment (e.g. the declaration was withdrawn meanwhile) keeps the payment on
     // record for a refund; on devnet that is a manual step.
     return outcome.kind === 'error' ? { ...outcome, payment } : outcome;

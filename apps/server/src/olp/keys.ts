@@ -28,6 +28,9 @@ interface SigningKey {
 
 const seconds = (date: Date) => Math.floor(date.getTime() / 1000);
 
+/** JWS `typ` of license receipts. */
+export const RECEIPT_TYPE = 'grantmark-receipt+jwt';
+
 export class KeyStore {
   private readonly db: DatabaseSync;
   private readonly issuer: string;
@@ -78,12 +81,26 @@ export class KeyStore {
       .sign(privateKey);
   }
 
+  /**
+   * A public receipt: no expiry, and a distinct `typ` so it can never pass as an access token.
+   */
+  async signReceipt(claims: JWTPayload, issuedAt: Date): Promise<string> {
+    const { kid, privateKey } = await this.signingKey();
+    return new SignJWT(claims)
+      .setProtectedHeader({ alg: 'ES256', kid, typ: RECEIPT_TYPE })
+      .setIssuer(this.issuer)
+      .setIssuedAt(seconds(issuedAt))
+      .sign(privateKey);
+  }
+
   /** The verified claims, or undefined for any invalid, expired or foreign token. */
   async verify(token: string, at: Date): Promise<JWTPayload | undefined> {
     try {
       const { payload } = await jwtVerify(token, createLocalJWKSet(await this.jwks()), {
         issuer: this.issuer,
         algorithms: ['ES256'],
+        typ: 'JWT',
+        requiredClaims: ['exp'],
         currentDate: at,
       });
       return payload;

@@ -68,6 +68,14 @@ export class PaymentStore {
     return row && toPayment(row);
   }
 
+  /** The payment that settled a license request, if any. */
+  succeededForRequest(licenseRequestId: string): StoredPayment | undefined {
+    const row = this.db
+      .prepare("SELECT * FROM payments WHERE license_request_id = ? AND status = 'succeeded'")
+      .get(licenseRequestId) as Row | undefined;
+    return row && toPayment(row);
+  }
+
   /** Payments that may still be paid or finalized. */
   open(): StoredPayment[] {
     return (this.db.prepare("SELECT * FROM payments WHERE status IN ('requires_payment', 'processing') ORDER BY created_at").all() as Row[]).map(toPayment);
