@@ -103,11 +103,28 @@ describe('rate limiting of public endpoints', () => {
     expect(await limited.json()).toMatchObject({ error: 'rate_limited' });
   });
 
-  it('does not limit the registry and OLP routes that other systems poll', async () => {
+  it('does not limit the registry routes that other systems poll', async () => {
     const { app } = setup({ RATE_LIMIT_PER_MINUTE: '1' });
     const statuses = [];
     for (let i = 0; i < 3; i++) statuses.push((await app.request('/registry/declarations/HCRN-0000-0068-F')).status);
     expect(statuses).toEqual([200, 200, 200]);
+  });
+
+  it('limits OLP and payment endpoints more generously, before client authentication runs', async () => {
+    const { app } = setup({ RATE_LIMIT_PER_MINUTE: '1' });
+    const wrongSecret = { authorization: `Basic ${Buffer.from('demo-studio:wrong-secret').toString('base64')}` };
+    const statuses = [];
+    for (let i = 0; i < 5; i++) statuses.push((await app.request('/olp/introspect', { method: 'POST', headers: wrongSecret })).status);
+    expect(statuses).toEqual([401, 401, 401, 401, 401]);
+    // The same budget covers the payment endpoints.
+    expect((await app.request('/v1/payments/pay_x', { headers: wrongSecret })).status).toBe(429);
+  });
+
+  it('counts the address the proxy appended, not one the client wrote into X-Forwarded-For', async () => {
+    const { app } = setup({ RATE_LIMIT_PER_MINUTE: '1', TRUST_PROXY: '1' });
+    await app.request('/v1/verify?license=x', { headers: { 'x-forwarded-for': '198.51.100.7, 203.0.113.1' } });
+    const spoofed = await app.request('/v1/verify?license=x', { headers: { 'x-forwarded-for': '198.51.100.8, 203.0.113.1' } });
+    expect(spoofed.status).toBe(429);
   });
 
   it('ignores X-Forwarded-For unless the server is told it sits behind a proxy', async () => {
@@ -118,5 +135,17 @@ describe('rate limiting of public endpoints', () => {
     const proxied = setup({ RATE_LIMIT_PER_MINUTE: '1', TRUST_PROXY: '1' }).app;
     await proxied.request('/v1/verify?license=x', { headers: { 'x-forwarded-for': '203.0.113.1' } });
     expect((await proxied.request('/v1/verify?license=x', { headers: { 'x-forwarded-for': '203.0.113.2' } })).status).toBe(404);
+  });
+});
+
+describe('request size limits', () => {
+  it('refuses oversized JSON bodies on the demo and evaluation endpoints', async () => {
+    const { app } = setup();
+    const big = (bytes: number) => JSON.stringify({ hcrn: MIRA, license: 1, padding: 'x'.repeat(bytes) });
+    const post = (path: string, body: string) =>
+      app.request(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+    expect((await post('/v1/demo/licenses', big(100_000))).status).toBe(413);
+    expect((await post('/v1/evaluate', big(3_000_000))).status).toBe(413);
+    expect(await (await post('/v1/evaluate', big(3_000_000))).json()).toMatchObject({ error: 'invalid_request' });
   });
 });

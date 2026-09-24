@@ -24,10 +24,13 @@ export const securityHeaders: MiddlewareHandler = async (c, next) => {
   c.header('x-frame-options', 'DENY');
 };
 
-/** The client address: X-Forwarded-For only when a trusted proxy sets it, else the socket. */
+/**
+ * The client address: the socket, or behind a trusted proxy the last X-Forwarded-For entry, which
+ * the proxy appended. Earlier entries come from the client and can be anything.
+ */
 function clientAddress(c: Context, trustProxy: boolean): string {
   if (trustProxy) {
-    const forwarded = c.req.header('x-forwarded-for')?.split(',')[0]?.trim();
+    const forwarded = c.req.header('x-forwarded-for')?.split(',').at(-1)?.trim();
     if (forwarded) return forwarded;
   }
   const incoming = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming;

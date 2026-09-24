@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { SolanaUsdcDevnet, createDevnetRpc, type SolanaRpc } from '@grantmark/payments';
 import { Stamper, loadTestPki, type SigningMaterial } from '@grantmark/stamp';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import type { Config } from './config';
 import { demoRoutes } from './demo/routes';
 import { apiError } from './http';
@@ -75,6 +76,11 @@ export function createServices(
   };
 }
 
+/** OLP and payment clients get this many times the public rate limit. */
+const CLIENT_RATE_FACTOR = 5;
+const MAX_EVALUATE_BYTES = 2 * 1024 * 1024;
+const MAX_DEMO_BYTES = 64 * 1024;
+
 /** The built demo web app, served at `/` when present. */
 export const DEFAULT_WEB_DIST = new URL('../../web/dist/', import.meta.url);
 
@@ -83,6 +89,21 @@ export function createApp(services: Services, config: Config, options: { webDist
   app.use('*', securityHeaders);
   const limit = rateLimit({ perMinute: config.rateLimitPerMinute, trustProxy: config.trustProxy, now: services.now });
   for (const path of ['/v1/verify', '/v1/evaluate', '/v1/demo/*']) app.use(path, limit);
+  // Client endpoints check a secret with scrypt, which is slow on purpose, so they are limited
+  // too, before authentication runs.
+  const clientLimit = rateLimit({
+    perMinute: config.rateLimitPerMinute * CLIENT_RATE_FACTOR,
+    trustProxy: config.trustProxy,
+    now: services.now,
+  });
+  for (const path of ['/olp/*', '/v1/payments/*']) app.use(path, clientLimit);
+  const tooLarge = (bytes: number) =>
+    bodyLimit({
+      maxSize: bytes,
+      onError: (c) => apiError(c, 413, 'invalid_request', `request bodies up to ${Math.round(bytes / 1024)} KB are accepted here`),
+    });
+  app.use('/v1/evaluate', tooLarge(MAX_EVALUATE_BYTES));
+  app.use('/v1/demo/*', tooLarge(MAX_DEMO_BYTES));
   app.get('/health', (c) => c.json({ status: 'ok' }));
   const openapi = openApiDocument(config);
   app.get('/openapi.json', (c) => c.json(openapi));
