@@ -157,8 +157,8 @@ describe('persona fixtures: roles', () => {
 
     const parsed = parseHcsDocument(read('noor-castell/declaration.xml'));
     if (!parsed.ok) throw new Error(parsed.error.message);
-    const declaration = checkDocument(parsed.document)[0]!.declaration!;
-    const lifecycle = checkLifecycle(declaration, { at: new Date(`${DEMO_DATE}T12:00:00Z`) });
+    const normalized = checkDocument(parsed.document)[0]!.declaration!;
+    const lifecycle = checkLifecycle(normalized, { at: new Date(`${DEMO_DATE}T12:00:00Z`) });
     expect(lifecycle.reasons.map((r) => r.code)).toEqual(['withdrawn']);
   });
 });
