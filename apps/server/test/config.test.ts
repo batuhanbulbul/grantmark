@@ -10,7 +10,16 @@ describe('loadConfig', () => {
       registryId: 'https://registry.grantmark.example',
       licenseServerUrl: 'https://license.grantmark.example/olp',
       adminToken: undefined,
+      solanaRpcUrl: 'https://api.devnet.solana.com',
+      operatorWallet: undefined,
+      operatorFeeBps: 0,
     });
+  });
+
+  it('reads the operator fee settings', () => {
+    const config = loadConfig({ OPERATOR_WALLET: 'GVJJ7rdGiXr5xaYbRwRbjfaJL7fmwRygFi1H6aGqDveb' });
+    expect(config).toMatchObject({ operatorWallet: 'GVJJ7rdGiXr5xaYbRwRbjfaJL7fmwRygFi1H6aGqDveb', operatorFeeBps: 1000 });
+    expect(loadConfig({ OPERATOR_WALLET: 'GVJJ7rdGiXr5xaYbRwRbjfaJL7fmwRygFi1H6aGqDveb', OPERATOR_FEE_BPS: '250' }).operatorFeeBps).toBe(250);
   });
 
   it('reads the environment and drops a trailing slash from the base URL', () => {
@@ -37,6 +46,10 @@ describe('loadConfig', () => {
     ['an http registry id (HCS §3.1.1 needs https)', { REGISTRY_ID: 'http://registry.example' }],
     ['an http license server URL (HCS §3.1.10 needs https)', { LICENSE_SERVER_URL: 'http://license.example/olp' }],
     ['a short admin token', { ADMIN_TOKEN: 'short' }],
+    ['an invalid operator wallet', { OPERATOR_WALLET: 'not-a-wallet' }],
+    ['an operator fee above 50%', { OPERATOR_WALLET: 'GVJJ7rdGiXr5xaYbRwRbjfaJL7fmwRygFi1H6aGqDveb', OPERATOR_FEE_BPS: '5001' }],
+    ['an operator fee without a wallet', { OPERATOR_FEE_BPS: '1000' }],
+    ['a non-https RPC URL', { SOLANA_RPC_URL: 'http://api.devnet.solana.com' }],
   ])('rejects %s', (_label, env) => {
     expect(() => loadConfig(env)).toThrow();
   });
