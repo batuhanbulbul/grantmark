@@ -13,6 +13,9 @@
     "node": ">=24"
   },
   "scripts": {
+    "dev": "npm run dev --workspace=apps/server",
+    "start": "npm run start --workspace=apps/server",
+    "seed": "npm run seed --workspace=apps/server",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json"
