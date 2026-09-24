@@ -1,6 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { checkDocument } from '../src/conformance';
 import { isReservedTestId, isValidHcsId } from '../src/ids';
+import { checkLifecycle } from '../src/lifecycle';
+import { checkRightsSubjectObject } from '../src/profiles';
 import { parseHcsDocument, type HcsRight } from '../src/parser';
 
 const PERSONAS = new URL('../../../fixtures/personas/', import.meta.url);
@@ -77,6 +80,20 @@ describe('persona fixtures: shared rules', () => {
     expect(record.additionalType).toBe('https://humanconsent.org/schemas/identity');
   });
 
+  it.each(declarationFiles)('%s conforms to the HCS 1.0 Draft', (path) => {
+    const parsed = parseHcsDocument(read(path));
+    if (!parsed.ok) throw new Error(parsed.error.message);
+    const [result] = checkDocument(parsed.document);
+    expect(result?.reasons).toEqual([]);
+    expect(result?.warnings).toEqual([]);
+  });
+
+  it.each(personas)('%s has a subject record that conforms to the Identity profile', (persona) => {
+    const record = subjectRecord(persona);
+    const hcsi = String(record['@id']).slice(CANONICAL_ID_BASE.length);
+    expect(checkRightsSubjectObject(record, { subject: 'identity', subjectId: hcsi })).toEqual([]);
+  });
+
   it('gives every declaration a unique HCRN', () => {
     const hcrns = declarationFiles.map((path) => declaration(path).attributes['registration-id']);
     expect(new Set(hcrns).size).toBe(hcrns.length);
@@ -137,5 +154,11 @@ describe('persona fixtures: roles', () => {
     expect(ageOn(String(subjectRecord('noor-castell').birthDate), DEMO_DATE)).toBeGreaterThanOrEqual(18);
     expect(right.attributes.status).toBe('withdrawn');
     expect(right.licenses[0]?.permits[0]?.text).toBe('hcs:ai-generate');
+
+    const parsed = parseHcsDocument(read('noor-castell/declaration.xml'));
+    if (!parsed.ok) throw new Error(parsed.error.message);
+    const declaration = checkDocument(parsed.document)[0]!.declaration!;
+    const lifecycle = checkLifecycle(declaration, { at: new Date(`${DEMO_DATE}T12:00:00Z`) });
+    expect(lifecycle.reasons.map((r) => r.code)).toEqual(['withdrawn']);
   });
 });
