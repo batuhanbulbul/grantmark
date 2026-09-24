@@ -20,6 +20,12 @@ describe.skipIf(process.env.GRANTMARK_LIVE_DEVNET !== '1')('live devnet RPC', ()
     expect(lastValidBlockHeight).toBeGreaterThan(0n);
   });
 
+  it('lists recent transactions of a token account, with memos', async () => {
+    const entries = await rpc.getSignaturesForAddress('DeJGcDqExnXDaMc2TX4bG9A5hRQ5SPxszsb37Zq4kNj3', 5);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(typeof entries[0]?.signature).toBe('string');
+  });
+
   it('reads and verifies the recorded payment', async () => {
     const tx = await rpc.getTransaction(RECORDED_SIGNATURE, 'finalized');
     const blockTime = new Date(1790215241 * 1000);

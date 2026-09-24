@@ -25,6 +25,9 @@ class FakeRpc implements SolanaRpc {
   async getGenesisHash() {
     return DEVNET_GENESIS_HASH;
   }
+  async getSignaturesForAddress() {
+    return [];
+  }
 }
 
 const input = (overrides: Partial<PaymentInput> = {}): PaymentInput => ({

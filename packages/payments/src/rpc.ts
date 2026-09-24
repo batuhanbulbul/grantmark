@@ -4,16 +4,26 @@
  * devnet, whatever URL is configured.
  */
 
-import { createSolanaRpc, type Signature } from '@solana/kit';
+import { address, createSolanaRpc, type Signature } from '@solana/kit';
 import type { ParsedTransaction } from './verify';
 
 export const DEVNET_GENESIS_HASH = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
 export const DEVNET_RPC_URL = 'https://api.devnet.solana.com';
 
+/** An entry from `getSignaturesForAddress`; `memo` carries a `[length] ` prefix. */
+export interface SignatureInfo {
+  readonly signature: string;
+  readonly err: unknown;
+  readonly memo: string | null;
+  readonly blockTime: number | null;
+}
+
 export interface SolanaRpc {
   getLatestBlockhash(): Promise<{ blockhash: string; lastValidBlockHeight: bigint }>;
   getTransaction(signature: string, commitment: 'confirmed' | 'finalized'): Promise<ParsedTransaction | null>;
   getGenesisHash(): Promise<string>;
+  /** Recent finalized transactions that touched an account, newest first. */
+  getSignaturesForAddress(account: string, limit: number): Promise<readonly SignatureInfo[]>;
 }
 
 export function assertDevnetGenesis(genesisHash: string): void {
@@ -44,6 +54,15 @@ export function createDevnetRpc(url: string = DEVNET_RPC_URL): SolanaRpc {
     },
     async getGenesisHash() {
       return rpc.getGenesisHash().send();
+    },
+    async getSignaturesForAddress(account, limit) {
+      const entries = await rpc.getSignaturesForAddress(address(account), { limit, commitment: 'finalized' }).send();
+      return entries.map((e) => ({
+        signature: e.signature,
+        err: e.err,
+        memo: e.memo,
+        blockTime: e.blockTime === null ? null : Number(e.blockTime),
+      }));
     },
   };
 }

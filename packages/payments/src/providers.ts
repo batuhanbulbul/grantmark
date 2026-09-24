@@ -177,6 +177,33 @@ export class SolanaUsdcDevnet implements PaymentProvider<SolanaPaymentRequest> {
     return { ...request, transaction, lastValidBlockHeight: blockhash.lastValidBlockHeight.toString() };
   }
 
+  /**
+   * Looks for a finalized transaction that pays this request among the recent transactions of the
+   * rights holder's token account, matching the memo first. A fallback for clients that paid but
+   * never reported the signature. Returns the signature, if found.
+   */
+  async findPayment(request: SolanaPaymentRequest, limit = 25): Promise<string | undefined> {
+    await this.ensureDevnet();
+    const account = request.splits[0]?.tokenAccount;
+    if (account === undefined) return undefined;
+    const expected = this.expected(request);
+    for (const entry of await this.rpc.getSignaturesForAddress(account, limit)) {
+      if (entry.err !== null || entry.memo === null || !entry.memo.includes(request.memo)) continue;
+      const tx = await this.rpc.getTransaction(entry.signature, 'finalized');
+      if (verifyTransfer(tx, expected).ok) return entry.signature;
+    }
+    return undefined;
+  }
+
+  private expected(request: SolanaPaymentRequest) {
+    return {
+      memo: request.memo,
+      transfers: request.splits.map((s) => ({ tokenAccount: s.tokenAccount, amount: BigInt(s.amount) })),
+      notBefore: new Date(Date.parse(request.createdAt) - SKEW_MS),
+      notAfter: new Date(Date.parse(request.expiresAt) + GRACE_MS),
+    };
+  }
+
   /** Succeeds only at `finalized` commitment; `confirmed` reports processing. */
   async verifyPayment(request: SolanaPaymentRequest, evidence: PaymentEvidence): Promise<VerificationResult> {
     const signature = evidence.signature;
@@ -184,12 +211,7 @@ export class SolanaUsdcDevnet implements PaymentProvider<SolanaPaymentRequest> {
       return { status: 'failed', reason: 'a valid transaction signature is required' };
     }
     await this.ensureDevnet();
-    const expected = {
-      memo: request.memo,
-      transfers: request.splits.map((s) => ({ tokenAccount: s.tokenAccount, amount: BigInt(s.amount) })),
-      notBefore: new Date(Date.parse(request.createdAt) - SKEW_MS),
-      notAfter: new Date(Date.parse(request.expiresAt) + GRACE_MS),
-    };
+    const expected = this.expected(request);
 
     const finalized = await this.rpc.getTransaction(signature, 'finalized');
     if (finalized !== null) {
