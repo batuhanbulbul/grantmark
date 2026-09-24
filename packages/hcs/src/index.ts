@@ -4,6 +4,7 @@ export * from './countries';
 export * from './evaluate';
 export * from './ids';
 export * from './lexical';
+export * from './license-match';
 export * from './lifecycle';
 export * from './parser';
 export * from './profiles';
