@@ -85,6 +85,11 @@ describe('verifyTransfer on a recorded devnet transaction', () => {
     expect(verifyTransfer(shuffled, expected()).ok).toBe(true);
   });
 
+  it('accepts decimals as a bigint, as @solana/kit returns them from a live RPC', () => {
+    const fromKit = variant((tx) => (transferIx(tx).parsed.info.tokenAmount.decimals = 6n));
+    expect(verifyTransfer(fromKit, expected()).ok).toBe(true);
+  });
+
   it('treats a destination account created in the same transaction as starting from zero', () => {
     const created = variant((tx) => {
       tx.meta.preTokenBalances = tx.meta.preTokenBalances.filter((b: any) => b.accountIndex !== 2);

@@ -1,6 +1,6 @@
 import { getBase64Encoder, getCompiledTransactionMessageDecoder, getTransactionDecoder, getUtf8Decoder } from '@solana/kit';
 import { ASSOCIATED_TOKEN_PROGRAM_ADDRESS, TOKEN_PROGRAM_ADDRESS, getTransferCheckedInstructionDataDecoder } from '@solana-program/token';
-import { MEMO_PROGRAM_ADDRESS } from '@solana-program/memo';
+import { LEGACY_MEMO_PROGRAM_ADDRESS_V3 } from '@solana-program/memo';
 import { describe, expect, it } from 'vitest';
 import { DEVNET_USDC_MINT, associatedTokenAccount, buildPaymentTransaction } from '../src/solana';
 
@@ -13,6 +13,7 @@ const BLOCKHASH = { blockhash: 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG', l
 async function decode(base64: string) {
   const transaction = getTransactionDecoder().decode(getBase64Encoder().encode(base64));
   const message = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
+  if (!('instructions' in message)) throw new Error('expected a legacy or v0 message');
   const accounts = message.staticAccounts;
   const instructions = message.instructions.map((ix) => ({
     program: accounts[ix.programAddressIndex],
@@ -55,7 +56,7 @@ describe('buildPaymentTransaction', () => {
       ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
       TOKEN_PROGRAM_ADDRESS,
       TOKEN_PROGRAM_ADDRESS,
-      MEMO_PROGRAM_ADDRESS,
+      LEGACY_MEMO_PROGRAM_ADDRESS_V3,
     ]);
 
     const transfers = instructions.filter((ix) => ix.program === TOKEN_PROGRAM_ADDRESS);
@@ -70,7 +71,7 @@ describe('buildPaymentTransaction', () => {
       [500_000n, 6],
     ]);
 
-    const memo = instructions.find((ix) => ix.program === MEMO_PROGRAM_ADDRESS)!;
+    const memo = instructions.find((ix) => ix.program === LEGACY_MEMO_PROGRAM_ADDRESS_V3)!;
     expect(getUtf8Decoder().decode(memo.data)).toBe('gm1:test-memo');
   });
 
