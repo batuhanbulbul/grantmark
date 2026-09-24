@@ -10,7 +10,7 @@ import { commitmentMemo } from './commitment';
 import { splitAmount, toBaseUnits, type PayeeRole } from './money';
 import { assertDevnetGenesis, type SolanaRpc } from './rpc';
 import { DEVNET_NETWORK, DEVNET_USDC_MINT, USDC_DECIMALS, associatedTokenAccount, buildPaymentTransaction } from './solana';
-import { verifyTransfer } from './verify';
+import { verifyTransfer, type ExpectedPayment, type TransferCheck } from './verify';
 
 export type ProviderId = 'solana-usdc-devnet' | 'stripe-test';
 export type PaymentStatus = 'requires_payment' | 'processing' | 'succeeded' | 'failed' | 'expired';
@@ -193,6 +193,13 @@ export class SolanaUsdcDevnet implements PaymentProvider<SolanaPaymentRequest> {
       if (verifyTransfer(tx, expected).ok) return entry.signature;
     }
     return undefined;
+  }
+
+  /** Re-reads a finalized transaction and checks it, e.g. against the facts in a receipt. */
+  async recheck(signature: string, expected: ExpectedPayment): Promise<TransferCheck> {
+    if (!isSignature(signature)) return { ok: false, reason: 'not a transaction signature' };
+    await this.ensureDevnet();
+    return verifyTransfer(await this.rpc.getTransaction(signature, 'finalized'), expected);
   }
 
   private expected(request: SolanaPaymentRequest) {

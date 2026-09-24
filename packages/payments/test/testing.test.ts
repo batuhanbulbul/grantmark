@@ -98,3 +98,21 @@ describe('SolanaUsdcDevnet.findPayment (fallback when the client never reports a
     expect(await new SolanaUsdcDevnet(rpc).findPayment(payment)).toBeUndefined();
   });
 });
+
+describe('SolanaUsdcDevnet.recheck (verification from a receipt, without the stored request)', () => {
+  it('re-reads a finalized transaction and checks it against expected transfers and memo', async () => {
+    const rpc = new FakeRpc();
+    const payment = await request(rpc);
+    rpc.finalized.set(SIGNATURE, parsedTransactionFor(payment, { signature: SIGNATURE, paidAt: new Date(NOW.getTime() + 30_000) }));
+    const provider = new SolanaUsdcDevnet(rpc);
+    const expected = {
+      memo: payment.memo,
+      transfers: payment.splits.map((s) => ({ tokenAccount: s.tokenAccount, amount: BigInt(s.amount) })),
+      notBefore: new Date(0),
+      notAfter: new Date(payment.expiresAt),
+    };
+    expect(await provider.recheck(SIGNATURE, expected)).toMatchObject({ ok: true });
+    expect(await provider.recheck(OTHER, expected)).toMatchObject({ ok: false, pending: true });
+    expect(await provider.recheck('not a signature', expected)).toMatchObject({ ok: false });
+  });
+});
