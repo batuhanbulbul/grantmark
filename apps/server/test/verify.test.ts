@@ -223,6 +223,24 @@ describe('POST /v1/verify', () => {
     expect(result.verdict.warnings.join(' ')).toMatch(/receipt/i);
   });
 
+  it('does not confirm a payment whose receipt terms do not hash to the on-chain memo', async () => {
+    const license = await paidLicense();
+    const genuine = services.licenses.license(license.id)!.receiptJws!;
+    const claims = JSON.parse(Buffer.from(genuine.split('.')[1]!, 'base64url').toString()) as Record<string, any>;
+    claims.payment.commitment.amount = { value: '0.01', currency: 'USD' };
+    const altered = await services.keys.signReceipt(claims, clock);
+    const image = await new Stamper(PKI).stamp({
+      image: placeholderPng(32, 32, 8),
+      mimeType: 'image/png',
+      licenseUrl: `${BASE}/v1/licenses/${license.id}`,
+      receipt: altered,
+    });
+    const result = await json(await verify(image.image));
+    expect(result.receipt).toMatchObject({ valid: true, matches_license: true });
+    expect(result.payment).toMatchObject({ on_chain: 'failed' });
+    expect(result.payment.reason).toMatch(/commitment/);
+  });
+
   it('requires an image', async () => {
     const response = await app.request('/v1/verify', { method: 'POST', body: new FormData() });
     expect(response.status).toBe(400);
