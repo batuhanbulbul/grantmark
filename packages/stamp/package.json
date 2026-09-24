@@ -1,0 +1,14 @@
+{
+  "name": "@grantmark/stamp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Stamps licensed images with a C2PA manifest carrying a CAWG consent assertion (test PKI only).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@contentauth/c2pa-node": "0.9.7"
+  }
+}

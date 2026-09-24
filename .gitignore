@@ -16,6 +16,10 @@ coverage/
 *.key
 id.json
 *-keypair.json
+# Public C2PA test certificates from c2pa-rs (see fixtures/test-pki/NOTICE)
+!fixtures/test-pki/es256-certs.pem
+!fixtures/test-pki/es256-private-key.pem
+!fixtures/test-pki/test-root-bundle.pem
 
 # Local databases
 data/

@@ -1,0 +1,8 @@
+TEST PKI ONLY. These certificates and this private key are public test material. Never trust
+them outside tests and demos.
+
+Source: https://github.com/contentauth/c2pa-rs (sdk/tests/fixtures/certs), retrieved 2026-09-24
+  es256-certs.pem        <- es256.pub   (C2PA Signer / Intermediate CA, "FOR TESTING_ONLY")
+  es256-private-key.pem  <- es256.pem
+  test-root-bundle.pem   <- trust/test_cert_root_bundle.pem
+License: MIT OR Apache-2.0, Copyright (c) Adobe and the c2pa-rs contributors.
