@@ -7,6 +7,7 @@
  */
 
 import { isHttpsUrl } from '@grantmark/hcs';
+import { DEVNET_RPC_URL, isSolanaAddress } from '@grantmark/payments';
 
 export interface Config {
   readonly port: number;
@@ -19,6 +20,12 @@ export interface Config {
   readonly licenseServerUrl: string;
   /** Enables the demo admin endpoints when set. */
   readonly adminToken?: string | undefined;
+  /** Solana JSON-RPC endpoint; payments refuse any cluster but devnet. */
+  readonly solanaRpcUrl: string;
+  /** Wallet that receives the fee of whoever operates this server; none when unset. */
+  readonly operatorWallet?: string | undefined;
+  /** Operator fee in basis points of each payment; 0 without an operator wallet. */
+  readonly operatorFeeBps: number;
 }
 
 const DEFAULTS = {
@@ -53,6 +60,18 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): C
   const adminToken = read('ADMIN_TOKEN');
   if (adminToken !== undefined && adminToken.length < 16) fail('ADMIN_TOKEN must be at least 16 characters');
 
+  const solanaRpcUrl = read('SOLANA_RPC_URL') ?? DEVNET_RPC_URL;
+  if (!isHttpsUrl(solanaRpcUrl)) fail(`SOLANA_RPC_URL must be an absolute HTTPS URL, found "${solanaRpcUrl}"`);
+
+  const operatorWallet = read('OPERATOR_WALLET');
+  if (operatorWallet !== undefined && !isSolanaAddress(operatorWallet)) fail('OPERATOR_WALLET must be a Solana address');
+  const feeText = read('OPERATOR_FEE_BPS');
+  if (feeText !== undefined && operatorWallet === undefined) fail('OPERATOR_FEE_BPS needs OPERATOR_WALLET');
+  const operatorFeeBps = operatorWallet === undefined ? 0 : Number(feeText ?? 1000);
+  if (!Number.isInteger(operatorFeeBps) || operatorFeeBps < 0 || operatorFeeBps > 5000) {
+    fail(`OPERATOR_FEE_BPS must be an integer from 0 to 5000, found "${feeText}"`);
+  }
+
   return {
     port,
     databasePath: read('DATABASE_PATH') ?? DEFAULTS.databasePath,
@@ -60,5 +79,8 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): C
     registryId,
     licenseServerUrl,
     adminToken,
+    solanaRpcUrl,
+    operatorWallet,
+    operatorFeeBps,
   };
 }

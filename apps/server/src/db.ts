@@ -122,6 +122,37 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    id: 3,
+    name: 'payments',
+    sql: `
+      -- Rights holder wallets per declaration; the operator fee wallet comes from configuration.
+      CREATE TABLE payees (
+        hcrn TEXT NOT NULL,
+        role TEXT NOT NULL CHECK (role IN ('rights_holder')),
+        wallet TEXT NOT NULL,
+        PRIMARY KEY (hcrn, role)
+      );
+
+      CREATE TABLE payments (
+        id TEXT PRIMARY KEY,
+        license_request_id TEXT NOT NULL REFERENCES license_requests (id),
+        client_id TEXT NOT NULL REFERENCES clients (client_id),
+        provider TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('requires_payment', 'processing', 'succeeded', 'failed', 'expired')),
+        request_json TEXT NOT NULL,
+        reported_signature TEXT,
+        external_ref TEXT, -- the verified transaction; one payment per transaction
+        receipt_json TEXT,
+        reason TEXT,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE (provider, external_ref)
+      );
+      CREATE UNIQUE INDEX payments_one_success_per_request ON payments (license_request_id) WHERE status = 'succeeded';
+    `,
+  },
 ];
 
 /** Applies pending migrations in order, each in its own transaction. Returns how many ran. */

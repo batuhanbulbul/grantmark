@@ -45,7 +45,7 @@ export type OlpErrorCode =
   | 'unsupported_grant_type';
 
 /** Why a license is refused: a Grantmark extension field next to the OLP error code. */
-export type ReasonCode = 'minor_protection' | 'not_operative' | 'not_permitted' | 'unsupported_terms';
+export type ReasonCode = 'minor_protection' | 'not_operative' | 'not_permitted' | 'unsupported_terms' | 'payment_unavailable';
 
 export interface Refusal {
   readonly kind: 'error';

@@ -43,6 +43,9 @@ export const MEMO_PROGRAM: string = LEGACY_MEMO_PROGRAM_ADDRESS_V3;
 /** Largest memo the SPL Memo program accepts without signers. */
 export const MAX_MEMO_BYTES = 566;
 
+/** Whether a string is a base58 Solana address (a public key). */
+export const isSolanaAddress = (value: string): boolean => isAddress(value);
+
 export async function associatedTokenAccount(owner: string, mint: string = DEVNET_USDC_MINT): Promise<string> {
   const [account] = await findAssociatedTokenPda({
     owner: address(owner),
