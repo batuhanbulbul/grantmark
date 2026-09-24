@@ -1,9 +1,9 @@
 import { parseHcsDocument, parseTimestamp, readXml } from '@grantmark/hcs';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createApp } from '../src/app';
+import { createApp, createServices } from '../src/app';
 import { loadConfig } from '../src/config';
 import { openDatabase } from '../src/db';
-import { RegistryStore } from '../src/registry/store';
+import type { RegistryStore } from '../src/registry/store';
 import { seedPersonas } from '../src/seed';
 
 const BASE = 'https://grantmark.test';
@@ -13,11 +13,14 @@ const MIRA_HCSI = 'HCSI-0000-0034-T';
 
 let store: RegistryStore;
 let app: ReturnType<typeof createApp>;
+let closed: ReturnType<typeof createApp>;
 
 beforeEach(() => {
-  store = new RegistryStore(openDatabase(':memory:'), () => new Date('2026-09-20T10:00:00Z'));
+  const services = createServices(openDatabase(':memory:'), config, () => new Date('2026-09-20T10:00:00Z'));
+  store = services.registry;
   seedPersonas(store, config);
-  app = createApp({ store, config });
+  app = createApp(services, config);
+  closed = createApp(services, { ...config, adminToken: undefined });
 });
 
 const get = (path: string, headers: Record<string, string> = {}) => app.request(path, { headers });
@@ -172,7 +175,6 @@ describe('POST /registry/admin/declarations', () => {
   });
 
   it('is disabled when no admin token is configured', async () => {
-    const closed = createApp({ store, config: { ...config, adminToken: undefined } });
     const response = await closed.request('/registry/admin/declarations', { method: 'POST', body: current() });
     expect(response.status).toBe(404);
   });
