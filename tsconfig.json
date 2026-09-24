@@ -3,8 +3,8 @@
   "include": [
     "packages/*/src",
     "packages/*/test",
-    "apps/*/src",
-    "apps/*/test",
+    "apps/server/src",
+    "apps/server/test",
     "scripts",
     "vitest.config.ts"
   ]

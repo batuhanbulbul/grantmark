@@ -18,7 +18,8 @@
     "seed": "npm run seed --workspace=apps/server",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
+    "build": "npm run build --workspace=apps/web"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
