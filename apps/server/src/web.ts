@@ -15,7 +15,7 @@ const TYPES: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-const API_PREFIXES = ['/v1/', '/olp/', '/registry/', '/.well-known/'];
+const API_PREFIXES = ['/v1/', '/olp/', '/registry/', '/.well-known/', '/health', '/openapi.json'];
 
 export function serveWeb(app: Hono, distFolder: string): void {
   const root = resolve(distFolder);

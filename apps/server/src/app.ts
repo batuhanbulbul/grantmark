@@ -6,6 +6,7 @@ import { Hono } from 'hono';
 import type { Config } from './config';
 import { demoRoutes } from './demo/routes';
 import { apiError } from './http';
+import { openApiDocument } from './openapi';
 import { licenseRoutes } from './licenses/routes';
 import { verifyRoutes } from './licenses/verify';
 import { ClientStore } from './olp/clients';
@@ -78,6 +79,9 @@ export const DEFAULT_WEB_DIST = new URL('../../web/dist/', import.meta.url);
 
 export function createApp(services: Services, config: Config, options: { webDist?: string | URL } = {}): Hono {
   const app = new Hono();
+  app.get('/health', (c) => c.json({ status: 'ok' }));
+  const openapi = openApiDocument(config);
+  app.get('/openapi.json', (c) => c.json(openapi));
   app.route('/', registryRoutes(services.registry, config));
   app.route('/', olpRoutes(services));
   app.route('/', paymentRoutes(services));
