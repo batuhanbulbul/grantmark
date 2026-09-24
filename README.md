@@ -17,4 +17,4 @@ Research phase.
 
 ## License
 
-To be decided.
+[Apache License 2.0](LICENSE)
