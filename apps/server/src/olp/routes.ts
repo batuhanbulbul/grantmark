@@ -107,6 +107,7 @@ export async function respondToTokenRequest(c: Context, services: OlpServices, c
 
   const started = await paymentService.start(outcome.request, form.payer);
   if (started.kind === 'error') return settled(started);
+  if (started.kind === 'unavailable') return apiError(c, 503, 'temporarily_unavailable', started.description, {}, NO_STORE);
   if (started.kind === 'payment') return paymentRequired(started.payment, 'This license requires payment before a token can be issued.');
   return apiError(
     c,

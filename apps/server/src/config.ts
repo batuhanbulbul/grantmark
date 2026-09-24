@@ -28,6 +28,10 @@ export interface Config {
   readonly operatorFeeBps: number;
   /** The OLP client the demo web app acts as (server side). */
   readonly demoClientId: string;
+  /** Requests per minute and client address on the public, expensive endpoints. */
+  readonly rateLimitPerMinute: number;
+  /** Whether to take the client address from X-Forwarded-For (only behind a trusted proxy). */
+  readonly trustProxy: boolean;
 }
 
 const DEFAULTS = {
@@ -74,6 +78,12 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): C
     fail(`OPERATOR_FEE_BPS must be an integer from 0 to 5000, found "${feeText}"`);
   }
 
+  const rateText = read('RATE_LIMIT_PER_MINUTE');
+  const rateLimitPerMinute = rateText === undefined ? 60 : Number(rateText);
+  if (!Number.isInteger(rateLimitPerMinute) || rateLimitPerMinute < 1) {
+    fail(`RATE_LIMIT_PER_MINUTE must be a positive integer, found "${rateText}"`);
+  }
+
   return {
     port,
     databasePath: read('DATABASE_PATH') ?? DEFAULTS.databasePath,
@@ -85,5 +95,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): C
     operatorWallet,
     operatorFeeBps,
     demoClientId: read('DEMO_CLIENT_ID') ?? 'demo-studio',
+    rateLimitPerMinute,
+    trustProxy: ['1', 'true'].includes(read('TRUST_PROXY') ?? ''),
   };
 }

@@ -9,7 +9,13 @@
  */
 
 import { canonicalLicense } from '@grantmark/hcs';
-import { isSolanaAddress, type PayeeRole, type SolanaUsdcDevnet } from '@grantmark/payments';
+import {
+  isSolanaAddress,
+  type PayeeRole,
+  type SolanaPaymentRequest,
+  type SolanaUsdcDevnet,
+  type VerificationResult,
+} from '@grantmark/payments';
 import type { Config } from '../config';
 import { newId } from '../ids';
 import type { Client } from '../olp/clients';
@@ -23,6 +29,7 @@ const EXPIRY_GRACE_MS = 120_000;
 
 export type StartOutcome =
   | { readonly kind: 'needs_payer'; readonly request: LicenseRequest }
+  | { readonly kind: 'unavailable'; readonly description: string }
   | { readonly kind: 'payment'; readonly payment: StoredPayment }
   | Refusal;
 
@@ -83,23 +90,29 @@ export class PaymentService {
     const now = this.now();
     const id = newId('pay', now.getTime());
     const expiresAt = new Date(now.getTime() + PAYMENT_TIMEOUT_SECONDS * 1000);
-    const paymentRequest = await this.provider.createPaymentRequest({
-      paymentId: id,
-      licenseRequestId: request.id,
-      amount: request.amount!,
-      payer,
-      payees,
-      terms: {
-        hcrn: request.hcrn,
-        hcsi: request.hcsi,
-        usage: request.usage,
-        subject_scope: request.subjectScope,
-        ...(request.place === undefined ? {} : { place: request.place }),
-        client: request.clientId,
-      },
-      createdAt: now,
-      expiresAt,
-    });
+    let paymentRequest: SolanaPaymentRequest;
+    try {
+      paymentRequest = await this.provider.createPaymentRequest({
+        paymentId: id,
+        licenseRequestId: request.id,
+        amount: request.amount!,
+        payer,
+        payees,
+        terms: {
+          hcrn: request.hcrn,
+          hcsi: request.hcsi,
+          usage: request.usage,
+          subject_scope: request.subjectScope,
+          ...(request.place === undefined ? {} : { place: request.place }),
+          client: request.clientId,
+        },
+        createdAt: now,
+        expiresAt,
+      });
+    } catch (error) {
+      console.error('could not build the payment on devnet', error);
+      return { kind: 'unavailable', description: 'Solana devnet is not reachable right now; try again shortly.' };
+    }
     const payment = this.payments.create({ id, licenseRequestId: request.id, clientId: request.clientId, request: paymentRequest, expiresAt });
     return { kind: 'payment', payment };
   }
@@ -169,7 +182,13 @@ export class PaymentService {
       };
     }
 
-    const result = await this.provider.verifyPayment(payment.request, { signature });
+    let result: VerificationResult;
+    try {
+      result = await this.provider.verifyPayment(payment.request, { signature });
+    } catch {
+      const reason = 'Solana devnet is unavailable, so the payment could not be checked yet; retry shortly.';
+      return { kind: 'pending', payment: this.payments.update(payment.id, { reportedSignature: signature, reason }) };
+    }
     if (result.status === 'succeeded' && result.receipt !== undefined) {
       let settled: StoredPayment;
       try {

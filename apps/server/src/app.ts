@@ -7,6 +7,7 @@ import type { Config } from './config';
 import { demoRoutes } from './demo/routes';
 import { apiError } from './http';
 import { openApiDocument } from './openapi';
+import { rateLimit, securityHeaders } from './protection';
 import { licenseRoutes } from './licenses/routes';
 import { verifyRoutes } from './licenses/verify';
 import { ClientStore } from './olp/clients';
@@ -79,6 +80,9 @@ export const DEFAULT_WEB_DIST = new URL('../../web/dist/', import.meta.url);
 
 export function createApp(services: Services, config: Config, options: { webDist?: string | URL } = {}): Hono {
   const app = new Hono();
+  app.use('*', securityHeaders);
+  const limit = rateLimit({ perMinute: config.rateLimitPerMinute, trustProxy: config.trustProxy, now: services.now });
+  for (const path of ['/v1/verify', '/v1/evaluate', '/v1/demo/*']) app.use(path, limit);
   app.get('/health', (c) => c.json({ status: 'ok' }));
   const openapi = openApiDocument(config);
   app.get('/openapi.json', (c) => c.json(openapi));

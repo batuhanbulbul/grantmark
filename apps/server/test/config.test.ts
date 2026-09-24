@@ -14,6 +14,8 @@ describe('loadConfig', () => {
       operatorWallet: undefined,
       operatorFeeBps: 0,
       demoClientId: 'demo-studio',
+      rateLimitPerMinute: 60,
+      trustProxy: false,
     });
   });
 
