@@ -48,6 +48,7 @@ import {
   signaturesOf,
   signStatement,
   thumbprint,
+  timeBound,
   type AgreementVersion,
   type ConsentRecord,
   type RecordEvent,
@@ -132,7 +133,7 @@ function expectNoInternal(result: CheckResult | VerifyResult): void {
 }
 
 function expectFaster({ result, ms }: Checked<CheckResult | VerifyResult>, boundMs: number): void {
-  expect(ms, `the check took ${Math.round(ms)} ms (${summary(result)})`).toBeLessThan(boundMs);
+  expect(ms, `the check took ${Math.round(ms)} ms (${summary(result)})`).toBeLessThan(timeBound(boundMs));
 }
 
 /** The check got past R0 and the schema, so the rules ran on the shape. */
@@ -1666,7 +1667,7 @@ describe('11. per-value and per-signature work', () => {
    */
   const PAIRS = 1_950;
 
-  it(`256 grants naming 256 works of 6 Cyrillic characters, ${RESTRICTIONS} signed narrowings each keeping 255 of them in all 256 grants, sealed into a valid record: in time, a limit problem allowed`, TIMEOUT, () => {
+  it(`256 grants naming 256 works of 6 Cyrillic characters, ${RESTRICTIONS} signed narrowings each keeping 255 of them in all 256 grants, sealed into a valid record: stops at the step limit, in time`, TIMEOUT, () => {
     const record = restrictedWorksRecord(RESTRICTIONS);
     const version2 = record.agreements[1]!;
     const works = new Set<string>();
@@ -1692,11 +1693,14 @@ describe('11. per-value and per-signature work', () => {
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget: a verifier that left part of it uncounted would
+    // find the record valid.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
     expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
 
-  it(`${PAIRS} suspensions of one grant, each lifted, every event signed with an ES384 key, sealed into a valid record: in time, a limit problem allowed`, TIMEOUT, () => {
+  it(`${PAIRS} suspensions of one grant, each lifted, every event signed with an ES384 key, sealed into a valid record: stops at the step limit, in time`, TIMEOUT, () => {
     const record = suspensionPairsRecord(PAIRS, es384Signer());
     const pairEvents = record.state.events.filter((event) => event.type === 'suspended' || event.type === 'resumed');
     expect(pairEvents).toHaveLength(2 * PAIRS);
@@ -1707,12 +1711,15 @@ describe('11. per-value and per-signature work', () => {
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget: a verifier that left part of it uncounted would
+    // find the record valid.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
     expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
 
-  // The two shapes above may stop at a limit, which would hide a builder mistake: small ones
-  // stay valid.
+  // The two shapes above stop at a limit, which would hide a builder mistake: small ones stay
+  // valid.
   it('8 such narrowings and 50 such ES384 pairs, sealed into valid records, stay valid', TIMEOUT, () => {
     for (const record of [restrictedWorksRecord(8), suspensionPairsRecord(50, es384Signer())]) {
       const checked = measure(() => checkRecordText(JSON.stringify(record)));

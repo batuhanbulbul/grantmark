@@ -20,6 +20,7 @@ import {
   signStatement,
   signaturesOf,
   thumbprint,
+  timeBound,
   type AgreementVersion,
   type ConsentRecord,
   type RecordEvent,
@@ -225,7 +226,7 @@ function expectBounded({ result, ms }: Checked, boundMs = CHECK_BOUND_MS): void 
   // A cut text keeps `LIMITS.problemChars` characters and gains "...".
   expect(longestAt, 'longest pointer').toBeLessThanOrEqual(LIMITS.problemChars + 3);
   expect(longestMessage, 'longest message').toBeLessThanOrEqual(LIMITS.problemChars + 3);
-  expect(ms, `the check took ${Math.round(ms)} ms (${about})`).toBeLessThan(boundMs);
+  expect(ms, `the check took ${Math.round(ms)} ms (${about})`).toBeLessThan(timeBound(boundMs));
 }
 
 function expectNoLimit(result: CheckResult): void {

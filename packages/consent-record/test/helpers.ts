@@ -14,6 +14,15 @@ export const EXAMPLE_URL = new URL('spec/examples/digital-double.example.json', 
 export const VECTORS_URL = new URL('spec/test-vectors/', REPO_ROOT_URL);
 export const CASES_URL = new URL('cases/', VECTORS_URL);
 
+/**
+ * A wall-clock bound in milliseconds, scaled for slower machines: shared CI runners take a few
+ * times as long as a dev laptop. The step limit, not the clock, is what bounds a check.
+ */
+export function timeBound(ms: number): number {
+  const ci = process.env.CI;
+  return ci === undefined || ci === '' || ci === 'false' ? ms : 3 * ms;
+}
+
 export const RULE_IDS: readonly RuleId[] = [
   'schema',
   'R0',

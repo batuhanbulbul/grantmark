@@ -12,6 +12,7 @@ import {
   rechain,
   sha256Base64url,
   signStatement,
+  timeBound,
   type AgreementVersion,
   type ConsentRecord,
   type KeyBinding,
@@ -39,9 +40,9 @@ const AFTER_EXAMPLE = Date.parse('2026-10-23T00:00:00Z');
 
 // On a dev laptop the scale checks take well under 1 s; at these sizes the cubic checks
 // this guards against took tens of seconds.
-const SCALE_BOUND_MS = 5_000;
-const BUDGET_BOUND_MS = 10_000;
-const SCHEMA_BOUND_MS = 1_000;
+const SCALE_BOUND_MS = timeBound(5_000);
+const BUDGET_BOUND_MS = timeBound(10_000);
+const SCHEMA_BOUND_MS = timeBound(1_000);
 const BUILD_TIMEOUT = { timeout: 120_000 };
 
 // ---------------------------------------------------------------------------------------
