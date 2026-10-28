@@ -23,6 +23,8 @@
    A paid offer answers `402` with a payment request: the studio pays USDC on Solana devnet
    straight to the rights holder's wallet, with a memo holding a hash of the exact terms.
    The server holds no Solana private key. Stripe test mode exists as an interface only.
+   Solana is the first payment rail: payments sit behind the `PaymentProvider` interface
+   (`packages/payments`), and other chains such as Ethereum and Sui are planned.
 3. **Stamp.** `@grantmark/stamp` signs an image with a C2PA manifest whose `cawg.consent`
    assertion points to the public license record (`/v1/licenses/{id}`), and adds a signed
    receipt. Signing uses test PKI only, so outside Grantmark the signer shows as unknown.
