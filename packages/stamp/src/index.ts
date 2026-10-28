@@ -146,10 +146,16 @@ export async function readStamp(input: {
   trustAnchors?: string | undefined;
 }): Promise<StampReading> {
   const notFound: StampReading = { found: false, trusted: false, failures: [], consent: [] };
+  // The image comes from whoever calls /v1/verify, so the reader must not fetch the URLs it
+  // names (a remote manifest, a certificate's OCSP responder): that would let the uploader
+  // make the server send requests (SSRF). Both are on by default in c2pa-rs. The empty host
+  // allow-list blocks any other fetch as well; the settings types do not list it yet.
+  const offline = { remoteManifestFetch: false, ocspFetch: false };
+  const noNetwork = { core: { allowedNetworkHosts: [] } } as {};
   const context =
     input.trustAnchors === undefined
-      ? undefined
-      : new Context({ verify: { verifyTrust: true }, trust: { trustAnchors: input.trustAnchors } });
+      ? new Context({ ...noNetwork, verify: offline })
+      : new Context({ ...noNetwork, verify: { ...offline, verifyTrust: true }, trust: { trustAnchors: input.trustAnchors } });
   const asset = { buffer: Buffer.from(input.image), mimeType: input.mimeType };
 
   let reader: Reader | null;

@@ -1,4 +1,7 @@
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { crc32 } from 'node:zlib';
+import { Builder, Context, LocalSigner, Reader } from '@contentauth/c2pa-node';
 import { describe, expect, it } from 'vitest';
 import { consentAssertion, loadTestPki, readStamp, Stamper, TRAINED_ALGORITHMIC_MEDIA } from '../src/index';
 import { placeholderPng } from '../src/placeholder';
@@ -107,5 +110,45 @@ describe('readStamp on an image without a manifest', () => {
 
   it('reports unreadable input as not found instead of throwing', async () => {
     expect(await readStamp({ image: new Uint8Array([1, 2, 3]), mimeType: 'image/png' })).toMatchObject({ found: false });
+  });
+});
+
+/** A signed PNG that carries no manifest, only the URL of a remote one. */
+async function remoteManifestPng(url: string): Promise<Uint8Array> {
+  const builder = await Builder.withJsonAsync(
+    { claim_generator_info: [{ name: 'test', version: '0' }], title: 'remote.png', assertions: [] } as Parameters<typeof Builder.withJsonAsync>[0],
+    new Context({ builder: { generateC2paArchive: true, thumbnail: { enabled: false } } }),
+  );
+  builder.setIntent({ create: TRAINED_ALGORITHMIC_MEDIA } as Parameters<Builder['setIntent']>[0]);
+  builder.setNoEmbed(true);
+  builder.setRemoteUrl(url);
+  const signer = LocalSigner.newSigner(Buffer.from(pki.certificateChain), Buffer.from(pki.privateKey), 'es256');
+  const output: { buffer: Buffer | null } = { buffer: null };
+  builder.sign(signer, { buffer: Buffer.from(PNG), mimeType: 'image/png' }, output);
+  return new Uint8Array(output.buffer!);
+}
+
+describe('readStamp on an image that names a remote manifest', () => {
+  it('never fetches it, so an uploaded image cannot make the server send requests', async () => {
+    let requests = 0;
+    const server = createServer((_request, response) => {
+      requests++;
+      response.writeHead(404).end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/manifest.c2pa`;
+      const image = await remoteManifestPng(url);
+      expect(Buffer.from(image).includes(url)).toBe(true);
+      for (const trustAnchors of [undefined, pki.trustAnchors]) {
+        expect(await readStamp({ image, mimeType: 'image/png', trustAnchors })).toMatchObject({ found: false });
+      }
+      expect(requests).toBe(0);
+      // Control: the c2pa defaults do fetch it, so the count above is meaningful.
+      await Reader.fromAsset({ buffer: Buffer.from(image), mimeType: 'image/png' }, new Context()).catch(() => null);
+      expect(requests).toBe(1);
+    } finally {
+      server.close();
+    }
   });
 });
