@@ -5,6 +5,7 @@
 FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
+COPY packages/consent-record/package.json packages/consent-record/
 COPY packages/hcs/package.json packages/hcs/
 COPY packages/payments/package.json packages/payments/
 COPY packages/stamp/package.json packages/stamp/

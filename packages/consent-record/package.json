@@ -1,0 +1,14 @@
+{
+  "name": "@grantmark/consent-record",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Verifier for the consent authority record profile in spec/ (draft 0.2.0).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
+  }
+}

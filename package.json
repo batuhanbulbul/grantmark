@@ -19,7 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
-    "build": "npm run build --workspace=apps/web"
+    "build": "npm run build --workspace=apps/web",
+    "verify-record": "tsx packages/consent-record/src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
