@@ -3,3 +3,6 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
+
+# Test vectors are byte-exact: some test the raw text (R0).
+spec/test-vectors/cases/** -text

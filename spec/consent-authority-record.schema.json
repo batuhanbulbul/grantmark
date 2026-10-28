@@ -1,0 +1,991 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://grantmark.example/spec/consent-authority-record/0.2.0/schema.json",
+  "title": "Consent authority record: likeness and digital replica profile (draft 0.2.0)",
+  "description": "The JSON document a consent authority returns when a verifier resolves the `uri` of a CAWG `cawg.consent` reference whose `reference_type` is `consent_authority`. One record covers one consent relationship with one living adult participant: the signed agreement versions, the history of every later change, payment evidence and the C2PA assets registered under it. It never contains biometric data. Draft 0.2.0, 2026-10-27. Tracks the CAWG consent assertion 1.0 draft, content v0.21. Not affiliated with or endorsed by CAWG, DIF or C2PA. JSON Schema cannot express every rule: spec/README.md defines the signing statements, the state derivation and the validation rules a verifier also applies.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile", "record_uri", "authority", "agreements", "state", "authority_attestation"],
+  "properties": {
+    "profile": { "$ref": "#/$defs/profileId" },
+    "example": {
+      "type": "boolean",
+      "description": "true marks illustrative data. A consumer MUST NOT treat a record with `example: true` as consent."
+    },
+    "record_uri": {
+      "$ref": "#/$defs/httpsUri",
+      "description": "The URI carried in the `uri` field of the `cawg.consent` references that point to this record. It never changes; it SHOULD be a persistent identifier that a successor authority can redirect."
+    },
+    "authority": { "$ref": "#/$defs/authority" },
+    "agreements": {
+      "type": "array",
+      "minItems": 1,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/agreementVersion" },
+            { "properties": { "agreement": { "properties": { "version": { "const": 1 } } } } }
+          ]
+        }
+      ],
+      "items": { "$ref": "#/$defs/agreementVersion" },
+      "description": "Every signed version of the agreement, oldest first. Version n + 1 restates the whole agreement, names version n by digest, and replaces it from the time its `version_added` event takes effect."
+    },
+    "state": { "$ref": "#/$defs/state" },
+    "disclosures": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/sha256Base64url" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["salt", "value"],
+        "properties": {
+          "salt": { "type": "string", "pattern": "^[A-Za-z0-9_-]{22,}$", "description": "At least 16 random bytes, base64url without padding." },
+          "value": { "description": "The disclosed JSON value." }
+        }
+      },
+      "description": "Present only in the full view. Maps each commitment digest to the salt and value it commits to. Removing this member yields the public view; every signature and the authority attestation verify on both views."
+    },
+    "authority_attestation": {
+      "allOf": [
+        { "$ref": "#/$defs/signature" },
+        { "properties": { "signer": { "$ref": "#/$defs/httpsUri" } } }
+      ],
+      "description": "The serving authority's signature over this record without `disclosures` and without this member. Its `signed_at` equals `state.as_of`."
+    }
+  },
+  "$defs": {
+    "profileId": {
+      "const": "https://grantmark.example/spec/consent-authority-record/0.2.0",
+      "description": "Identifies this profile and version. The `.example` host is a placeholder until a persistent identifier is registered."
+    },
+    "httpsUri": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://([A-Za-z0-9.-]+|\\[[0-9A-Fa-f:.]+\\])(:[0-9]*)?([/?#][^\\s]*)?$",
+      "description": "An https URI whose authority is a host name, an IPv4 address or a bracketed IPv6 address, with an optional port: no userinfo (RFC 9110 §4.2.4) and no percent-encoding, so that every URI parser finds the same host (R10)."
+    },
+    "absoluteUri": { "type": "string", "format": "uri", "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$" },
+    "extensionUri": {
+      "$ref": "#/$defs/absoluteUri",
+      "description": "An absolute URI naming a value defined outside this profile."
+    },
+    "localId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+      "description": "An identifier that is unique within this record."
+    },
+    "actorId": {
+      "anyOf": [{ "$ref": "#/$defs/localId" }, { "$ref": "#/$defs/httpsUri" }],
+      "description": "A `party_id`, or the `id` of a consent authority."
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]{1,3})?Z$",
+      "description": "RFC 3339 date-time in UTC (`Z`), to the millisecond at most, without leap seconds. Validators assert `format`, which also rejects impossible dates such as 30 February. Values are compared as instants, so `09:58:00.5Z` and `09:58:00.500Z` are equal."
+    },
+    "sha256Base64url": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$",
+      "description": "A SHA-256 digest, base64url without padding."
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "value"],
+      "description": "Digest of the exact bytes of a document that is not embedded, for example a signed PDF or an invoice.",
+      "properties": {
+        "alg": { "const": "sha-256" },
+        "value": { "$ref": "#/$defs/sha256Base64url" }
+      }
+    },
+    "commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commitment"],
+      "description": "Stands in for a withheld value: base64url(SHA-256(UTF-8(JCS([salt, value])))). The salt and value appear in `disclosures` in the full view.",
+      "properties": { "commitment": { "$ref": "#/$defs/sha256Base64url" } }
+    },
+    "text": { "type": "string", "minLength": 1 },
+    "disclosableText": { "anyOf": [{ "$ref": "#/$defs/text" }, { "$ref": "#/$defs/commitment" }] },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "currency"],
+      "properties": {
+        "value": { "type": "string", "pattern": "^(0|[1-9][0-9]{0,14})(\\.[0-9]{1,6})?$", "description": "Decimal amount as a string, so no precision is lost." },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "description": "ISO 4217 currency code." }
+      }
+    },
+    "disclosableMoney": { "anyOf": [{ "$ref": "#/$defs/money" }, { "$ref": "#/$defs/commitment" }] },
+    "percent": { "type": "string", "pattern": "^(100(\\.0{1,4})?|[0-9]{1,2}(\\.[0-9]{1,4})?)$", "description": "A percentage from 0 to 100 as a decimal string." },
+    "disclosablePercent": { "anyOf": [{ "$ref": "#/$defs/percent" }, { "$ref": "#/$defs/commitment" }] },
+    "languageTag": {
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,3}(-[A-Za-z]{3}){0,3}(-[A-Za-z]{4})?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*$",
+      "description": "A BCP 47 language tag limited to language, extended language, script, region and variant subtags."
+    },
+    "countryCode": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2 country code." },
+    "mediaTypeName": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$",
+      "description": "A media type (RFC 6838) without parameters."
+    },
+    "assetMediaType": { "enum": ["image", "video", "audio", "3d", "interactive", "text"] },
+    "channel": { "enum": ["web", "social", "e_commerce", "print", "broadcast", "streaming", "out_of_home", "in_store", "internal"] },
+    "prohibitedContext": {
+      "anyOf": [
+        { "enum": ["political", "adult", "religious", "tobacco_alcohol_gambling", "weapons", "health_claims", "financial_products", "deceptive_or_defamatory"] },
+        { "$ref": "#/$defs/extensionUri" }
+      ]
+    },
+    "identityAttribute": {
+      "enum": ["name", "image", "likeness", "voice", "movement", "mannerisms", "persona"],
+      "description": "The attributes CAWG consent v0.21 names for identity consent."
+    },
+    "identityUse": {
+      "anyOf": [
+        {
+          "enum": ["replica.create", "replica.modify", "media.generate", "media.alter", "model.train"],
+          "description": "replica.create: build a digital replica (scan, avatar, voice model). replica.modify: change or retrain it. media.generate: make new media depicting the participant. media.alter: change existing recordings of the participant with AI. model.train: train or fine-tune any other AI model on the participant's attributes."
+        },
+        { "$ref": "#/$defs/extensionUri" }
+      ]
+    },
+    "assetUse": {
+      "anyOf": [
+        {
+          "enum": ["cawg.data_mining", "cawg.ai_inference", "cawg.ai_training", "cawg.ai_generative_training"],
+          "description": "Entry keys of the CAWG training and data mining assertion 1.1."
+        },
+        { "const": "asset.derive", "description": "Make derivative works of the asset." },
+        { "$ref": "#/$defs/extensionUri" }
+      ]
+    },
+
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "keys_uri", "continuity"],
+      "description": "The authority serving this response. It is the authority in charge: version 1's `authority_id`, or the last authority that an `authority_transferred` event handed the record to.",
+      "properties": {
+        "id": { "$ref": "#/$defs/httpsUri", "description": "Identifier of the consent authority." },
+        "name": { "$ref": "#/$defs/text" },
+        "contact": { "type": "string", "format": "uri", "pattern": "^(mailto:|https://)[^\\s]+$", "description": "Where to send questions and withdrawals." },
+        "keys_uri": { "$ref": "#/$defs/httpsUri", "description": "A JWK Set (RFC 7517) on the same origin as `id`, listing the keys that sign attestations and events, including the keys of earlier signatures." },
+        "continuity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy_uri"],
+          "description": "How records stay resolvable if this authority stops or hands over (CAWG consent v0.21 §5, record continuity and succession).",
+          "properties": {
+            "policy_uri": { "$ref": "#/$defs/httpsUri" },
+            "successor_authority": { "$ref": "#/$defs/httpsUri", "description": "An authority designated to take over the records." },
+            "escrow": { "$ref": "#/$defs/text", "description": "How records are escrowed, in plain words." }
+          }
+        }
+      }
+    },
+
+    "agreementVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agreement", "agreement_digest", "signatures"],
+      "properties": {
+        "agreement": { "$ref": "#/$defs/agreement" },
+        "agreement_digest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alg", "canonicalization", "value"],
+          "description": "Digest of `agreement`: base64url(SHA-256(UTF-8(JCS(agreement)))).",
+          "properties": {
+            "alg": { "const": "sha-256" },
+            "canonicalization": { "const": "jcs-rfc8785", "description": "JSON Canonicalization Scheme, RFC 8785." },
+            "value": { "$ref": "#/$defs/sha256Base64url" }
+          }
+        },
+        "signatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/signature" },
+              { "properties": { "signer": { "$ref": "#/$defs/localId" } } }
+            ]
+          },
+          "description": "One signature per signing party. The participant and every licensee of a grant sign each version. Any other party signs a version that changes its party entry, or adds, changes or drops a compensation item it pays or receives (or a grant that names that item), a grant it holds, its asset terms or `asset_rights` entries, or the biometric declaration naming it as holder (R6). A representative may also sign; it never signs in the participant's place."
+        }
+      }
+    },
+
+    "agreement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "record_uri", "authority_id", "version", "created_at", "language", "parties", "consent_document", "terms", "compensation", "biometric_identifiers", "retention"],
+      "description": "The signed part of one version. Nothing in it ever changes. It names the profile, the record and the authority, so it cannot be presented under another record or authority.",
+      "properties": {
+        "profile": { "$ref": "#/$defs/profileId" },
+        "record_uri": { "$ref": "#/$defs/httpsUri", "description": "Equal to the record's `record_uri`." },
+        "authority_id": { "$ref": "#/$defs/httpsUri", "description": "The authority that the parties instruct to hold this record. It is the authority in charge when the version is recorded." },
+        "version": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "previous_version_digest": { "$ref": "#/$defs/sha256Base64url", "description": "`agreement_digest.value` of version n - 1. Absent in version 1." },
+        "created_at": { "$ref": "#/$defs/dateTime" },
+        "language": { "$ref": "#/$defs/languageTag", "description": "Language of the human-readable texts in this agreement." },
+        "jurisdictions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?$", "description": "ISO 3166-1 alpha-2 or ISO 3166-2 code, for example `US-NY` or `DK`." },
+          "description": "Jurisdictions the parties considered when drafting. Informational; not a choice-of-law clause."
+        },
+        "parties": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/party" },
+          "contains": { "type": "object", "required": ["roles"], "properties": { "roles": { "contains": { "const": "participant" } } } },
+          "minContains": 1,
+          "maxContains": 1,
+          "description": "Exactly one participant, and a licensee when the version has a grant. A work showing several people has one record, and one `cawg.consent` reference, per person."
+        },
+        "consent_document": { "$ref": "#/$defs/consentDocument" },
+        "terms": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/term" },
+          "description": "At least one term (CAWG consent v0.21 §5)."
+        },
+        "compensation": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/compensation" },
+          "description": "Every agreed payment. Grants reference these by `compensation_id`; an unpaid grant references an item with model `unpaid`."
+        },
+        "end_of_use": { "$ref": "#/$defs/endOfUse", "description": "Required when the version has a grant." },
+        "biometric_identifiers": { "$ref": "#/$defs/biometricIdentifiers" },
+        "asset_rights": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/assetRights" },
+          "description": "Licensing posture of the assets made under this agreement, declared by their rights holders."
+        },
+        "retention": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["disclosures_until", "record_until"],
+          "description": "How long the authority keeps this record.",
+          "properties": {
+            "disclosures_until": { "$ref": "#/$defs/dateTime", "description": "When the authority deletes `disclosures`. Commitments and signatures stay verifiable afterwards." },
+            "record_until": {
+              "anyOf": [{ "$ref": "#/$defs/dateTime" }, { "type": "null" }],
+              "description": "When the authority deletes the record. null: kept while any registered asset may still be in circulation, under `authority.continuity`."
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["version"], "properties": { "version": { "const": 1 } } },
+          "then": { "properties": { "previous_version_digest": false } },
+          "else": { "required": ["previous_version_digest"] }
+        },
+        {
+          "if": { "required": ["terms"], "properties": { "terms": { "contains": { "type": "object", "required": ["kind"], "properties": { "kind": { "const": "grant" } } } } } },
+          "then": {
+            "required": ["end_of_use"],
+            "properties": { "parties": { "contains": { "type": "object", "required": ["roles"], "properties": { "roles": { "contains": { "const": "licensee" } } } } } }
+          }
+        }
+      ]
+    },
+
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["party_id", "roles", "type"],
+      "properties": {
+        "party_id": { "$ref": "#/$defs/localId" },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["participant", "authorized_representative", "rights_holder", "licensee", "sublicensee", "payer", "payee"] },
+          "description": "`participant` is the natural person whose identity attributes the terms cover (CAWG consent v0.21). `authorized_representative` acts for the participant. `rights_holder` holds rights in the assets made under the agreement."
+        },
+        "type": { "enum": ["person", "organization"] },
+        "display_name": { "$ref": "#/$defs/disclosableText" },
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scheme", "value"],
+            "properties": {
+              "scheme": {
+                "anyOf": [
+                  { "enum": ["human_consent_id", "isni", "lei", "did", "domain", "x509_sha256"] },
+                  { "$ref": "#/$defs/extensionUri" }
+                ],
+                "description": "`human_consent_id` is optional and creates no dependency on any registry. `x509_sha256` is the base64url SHA-256 of a DER certificate the party signs with, for certificates that name it by neither a domain nor an LEI (for example a person's qualified certificate)."
+              },
+              "value": { "$ref": "#/$defs/disclosableText" }
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["identity_verified", "adult", "method", "verified_at", "verified_by"],
+          "description": "For the participant: identity and adulthood were checked. No date of birth is recorded.",
+          "properties": {
+            "identity_verified": { "const": true },
+            "adult": { "const": true },
+            "method": { "enum": ["identity_document_check", "trusted_third_party", "in_person_check", "other"] },
+            "verified_at": { "$ref": "#/$defs/dateTime" },
+            "verified_by": { "$ref": "#/$defs/actorId" }
+          }
+        },
+        "identity_binding": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "value"],
+            "properties": {
+              "method": { "enum": ["did", "x509_subject", "cawg_identity", "other"] },
+              "value": { "$ref": "#/$defs/text" }
+            }
+          },
+          "description": "For the participant: values a verifier can match against the named actor of a `cawg.identity` assertion that a reference's `bound_actor` points to."
+        },
+        "represents": { "$ref": "#/$defs/localId", "description": "For an authorized representative: the participant's `party_id`." },
+        "authorization_basis": { "enum": ["representation_agreement", "power_of_attorney", "employment", "other"] },
+        "authorization_evidence": { "$ref": "#/$defs/digest", "description": "Digest of the document that authorizes the representative." }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["roles"], "properties": { "roles": { "contains": { "const": "participant" } } } },
+          "then": {
+            "required": ["display_name", "verification"],
+            "properties": {
+              "type": { "const": "person" },
+              "roles": { "not": { "contains": { "enum": ["authorized_representative", "licensee", "sublicensee"] } } }
+            }
+          },
+          "else": { "properties": { "verification": false, "identity_binding": false } }
+        },
+        {
+          "if": { "required": ["roles"], "properties": { "roles": { "contains": { "const": "authorized_representative" } } } },
+          "then": { "required": ["represents", "authorization_basis", "authorization_evidence"] },
+          "else": { "properties": { "represents": false, "authorization_basis": false, "authorization_evidence": false } }
+        }
+      ]
+    },
+
+    "consentDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "language", "media_type", "digest", "presented_at", "signed_at", "separate_document"],
+      "description": "The human-readable written consent the participant read and signed for this version.",
+      "properties": {
+        "title": { "$ref": "#/$defs/disclosableText" },
+        "language": { "$ref": "#/$defs/languageTag" },
+        "media_type": { "$ref": "#/$defs/mediaTypeName" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "presented_at": { "$ref": "#/$defs/dateTime" },
+        "signed_at": { "$ref": "#/$defs/dateTime" },
+        "separate_document": { "type": "boolean", "description": "Whether the consent is a document of its own rather than a clause of another agreement. New York asks a model management company to obtain it separately from the representation agreement (Labor Law §1034(11))." }
+      }
+    },
+
+    "territories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include"],
+      "properties": {
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "anyOf": [{ "$ref": "#/$defs/countryCode" }, { "const": "WORLD" }] }
+        },
+        "exclude": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/countryCode" } }
+      },
+      "if": { "required": ["include"], "properties": { "include": { "contains": { "const": "WORLD" } } } },
+      "then": { "properties": { "include": { "maxItems": 1 } } },
+      "else": { "properties": { "exclude": false } },
+      "description": "Either `[\"WORLD\"]` with optional exclusions, or a list of countries."
+    },
+    "sublicensing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed"],
+      "properties": {
+        "allowed": { "type": "boolean" },
+        "to": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" }, "description": "The only parties a sublicense may go to. Absent: any party." },
+        "limited_to": { "$ref": "#/$defs/text", "description": "What a sublicensee may do, in plain words." }
+      },
+      "if": { "required": ["allowed"], "properties": { "allowed": { "const": false } } },
+      "then": { "properties": { "to": false, "limited_to": false } }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media_types", "channels", "territories"],
+      "properties": {
+        "media_types": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/assetMediaType" } },
+        "channels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/channel" } },
+        "territories": { "$ref": "#/$defs/territories" },
+        "exclusivity": { "enum": ["exclusive", "non_exclusive"] },
+        "sublicensing": { "$ref": "#/$defs/sublicensing" },
+        "max_assets": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "description": "Upper limit on the number of assets registered under the term." },
+        "named_works": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": { "type": "string", "$ref": "#/$defs/text" },
+          "description": "Campaigns, products or titles the term is limited to. Absent: not limited to named works."
+        },
+        "prohibited_contexts": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "type": "string", "$ref": "#/$defs/prohibitedContext" },
+          "description": "Named contextual prohibitions (CAWG consent v0.21 §5)."
+        }
+      }
+    },
+
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term_id", "kind", "consent_domain", "uses", "valid_from"],
+      "properties": {
+        "term_id": { "$ref": "#/$defs/localId", "description": "Stable across versions. A term id that a version drops, or that is withdrawn or ended, never returns in a later version." },
+        "kind": {
+          "enum": ["grant", "prohibition"],
+          "description": "A grant permits the listed uses within its scope. A prohibition forbids the listed uses to everyone, whatever any grant says."
+        },
+        "consent_domain": {
+          "enum": ["identity", "asset"],
+          "description": "Same values as `consent_domain` in `cawg.consent`. Identity terms are declared by the participant; asset terms by a rights holder named in `declared_by`."
+        },
+        "declared_by": { "$ref": "#/$defs/localId", "description": "For asset terms: the declaring rights holder's `party_id`." },
+        "identity_attributes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/identityAttribute" } },
+        "uses": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string" } },
+        "purpose": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["description"],
+          "properties": {
+            "description": { "type": "string", "minLength": 10, "description": "What the use is for, specific enough for the participant to recognise it." },
+            "categories": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "type": "string", "enum": ["advertising", "editorial", "entertainment", "e_commerce", "internal_review", "other"] }
+            }
+          }
+        },
+        "scope": { "$ref": "#/$defs/scope" },
+        "licensees": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" }, "description": "The parties that may exercise the grant." },
+        "valid_from": { "$ref": "#/$defs/dateTime" },
+        "valid_until": { "$ref": "#/$defs/dateTime", "description": "Exclusive end. Required for grants. A prohibition without it has no end." },
+        "withdrawal_right": {
+          "type": "boolean",
+          "description": "Whether the agreement lets the declaring party withdraw the grant before `valid_until` without breach. A recorded withdrawal takes effect in this record either way; this flag records the contractual position only."
+        },
+        "compensation": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" }, "description": "`compensation_id` values that pay for the grant." },
+        "end_of_use": { "$ref": "#/$defs/endOfUse", "description": "Overrides the agreement's `end_of_use` for this grant." },
+        "notes": { "$ref": "#/$defs/text" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["consent_domain"], "properties": { "consent_domain": { "const": "identity" } } },
+          "then": {
+            "required": ["identity_attributes"],
+            "properties": { "declared_by": false, "uses": { "items": { "$ref": "#/$defs/identityUse" } } }
+          },
+          "else": {
+            "required": ["declared_by"],
+            "properties": { "identity_attributes": false, "uses": { "items": { "$ref": "#/$defs/assetUse" } } }
+          }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "grant" } } },
+          "then": { "required": ["purpose", "scope", "licensees", "valid_until", "withdrawal_right", "compensation"] },
+          "else": {
+            "properties": { "purpose": false, "scope": false, "licensees": false, "withdrawal_right": false, "compensation": false, "end_of_use": false }
+          }
+        }
+      ]
+    },
+
+    "assetRights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rights_holder", "posture"],
+      "properties": {
+        "rights_holder": { "$ref": "#/$defs/localId" },
+        "posture": { "enum": ["all_rights_reserved", "licensed", "available_for_licensing"] },
+        "license_uri": { "$ref": "#/$defs/absoluteUri", "description": "The license that applies, when `posture` is `licensed`." },
+        "contact": { "type": "string", "format": "uri", "pattern": "^(mailto:|https://)[^\\s]+$", "description": "Where to ask for a license." }
+      },
+      "if": { "required": ["posture"], "properties": { "posture": { "const": "licensed" } } },
+      "then": { "required": ["license_uri"] }
+    },
+
+    "compensation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compensation_id", "model", "description"],
+      "properties": {
+        "compensation_id": { "$ref": "#/$defs/localId" },
+        "model": { "enum": ["flat_fee", "per_asset", "per_period", "royalty", "unpaid", "other"] },
+        "amount": { "$ref": "#/$defs/disclosableMoney", "description": "The rate of pay. For `per_asset` and `per_period` it is the amount per unit." },
+        "royalty_percent": { "$ref": "#/$defs/disclosablePercent" },
+        "basis": { "$ref": "#/$defs/text", "description": "The unit or base, for example `per published video` or `net revenue of the campaign`." },
+        "cap": { "$ref": "#/$defs/disclosableMoney", "description": "Maximum total payable under this item, in the currency of `amount`." },
+        "payer": { "$ref": "#/$defs/localId" },
+        "payee": { "$ref": "#/$defs/localId" },
+        "due_by": { "$ref": "#/$defs/dateTime" },
+        "description": { "$ref": "#/$defs/text" }
+      },
+      "allOf": [
+        { "if": { "required": ["model"], "properties": { "model": { "enum": ["flat_fee", "per_asset", "per_period"] } } }, "then": { "required": ["amount"], "properties": { "royalty_percent": false } } },
+        { "if": { "required": ["model"], "properties": { "model": { "enum": ["per_asset", "per_period", "royalty"] } } }, "then": { "required": ["basis"] } },
+        { "if": { "required": ["model"], "properties": { "model": { "const": "flat_fee" } } }, "then": { "properties": { "cap": false } } },
+        { "if": { "required": ["model"], "properties": { "model": { "const": "royalty" } } }, "then": { "required": ["royalty_percent"], "properties": { "amount": false } } },
+        { "if": { "required": ["model"], "properties": { "model": { "const": "unpaid" } } }, "then": { "properties": { "amount": false, "royalty_percent": false, "basis": false, "cap": false, "due_by": false, "payer": false, "payee": false } }, "else": { "required": ["payer", "payee"] } }
+      ]
+    },
+
+    "assetsOnEnd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": { "enum": ["may_remain", "remove"], "description": "What happens to assets already published." },
+        "within_days": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+      },
+      "if": { "required": ["action"], "properties": { "action": { "const": "remove" } } },
+      "then": { "required": ["within_days"] },
+      "else": { "properties": { "within_days": false } }
+    },
+    "disposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": { "enum": ["delete", "hand_over_to_participant", "retain_without_use", "not_applicable"], "description": "`not_applicable`: the grant makes no replica, or no source captures." },
+        "within_days": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "retain_until": { "$ref": "#/$defs/dateTime", "description": "For `retain_without_use`: when the retained copy is deleted." }
+      },
+      "allOf": [
+        { "if": { "required": ["action"], "properties": { "action": { "const": "retain_without_use" } } }, "then": { "required": ["retain_until"] }, "else": { "properties": { "retain_until": false } } },
+        { "if": { "required": ["action"], "properties": { "action": { "enum": ["delete", "hand_over_to_participant"] } } }, "then": { "required": ["within_days"] }, "else": { "properties": { "within_days": false } } }
+      ]
+    },
+    "endRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["existing_assets", "replica", "source_captures"],
+      "properties": {
+        "existing_assets": { "$ref": "#/$defs/assetsOnEnd" },
+        "replica": { "$ref": "#/$defs/disposal", "description": "The digital replica itself (avatar, voice model, trained weights)." },
+        "source_captures": { "$ref": "#/$defs/disposal", "description": "Photos, scans and recordings made to build the replica." }
+      }
+    },
+    "endOfUse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["on_expiry", "on_withdrawal", "withdrawal_channels"],
+      "description": "What happens when a grant reaches its `valid_until` or a version drops it (`on_expiry`), and when it is withdrawn or a narrowing ends it early (`on_withdrawal`). New uses stop in every case. There is no notice period in the record: a withdrawal takes effect when the authority receives it, or at a later instant the party signs.",
+      "properties": {
+        "on_expiry": { "$ref": "#/$defs/endRule" },
+        "on_withdrawal": { "$ref": "#/$defs/endRule" },
+        "withdrawal_channels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["authority_portal", "email", "written_letter", "in_person", "via_representative", "other"] },
+          "description": "Ways the authority accepts a withdrawal. No particular form is required of the participant."
+        }
+      }
+    },
+
+    "biometricIdentifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["held_by_authority", "restriction", "collected_in_engagement", "statement"],
+      "description": "A declaration about biometric identifiers. It never contains them.",
+      "properties": {
+        "held_by_authority": { "const": false, "description": "The authority holds no biometric identifiers, templates or embeddings for this record." },
+        "restriction": {
+          "const": "no_use_unrelated_to_engagement",
+          "description": "The default restriction of CAWG consent v0.21 §5: biometric identifiers collected for this engagement are not used for any unrelated purpose."
+        },
+        "collected_in_engagement": { "type": "boolean", "description": "Whether a party derives biometric identifiers for this engagement, for example face geometry from a scan." },
+        "kinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["face_geometry", "voiceprint", "body_scan", "fingerprint", "palmprint", "iris", "other"] }
+        },
+        "holder": { "$ref": "#/$defs/localId", "description": "The party that holds them." },
+        "delete_by": { "$ref": "#/$defs/dateTime" },
+        "statement": { "$ref": "#/$defs/text" }
+      },
+      "if": { "required": ["collected_in_engagement"], "properties": { "collected_in_engagement": { "const": true } } },
+      "then": { "required": ["kinds", "holder", "delete_by"] },
+      "else": { "properties": { "kinds": false, "holder": false, "delete_by": false } }
+    },
+
+    "publicJwk": {
+      "type": "object",
+      "required": ["kty"],
+      "properties": { "kty": { "enum": ["AKP", "EC", "OKP", "RSA"] } },
+      "not": {
+        "anyOf": [
+          { "required": ["d"] }, { "required": ["p"] }, { "required": ["q"] },
+          { "required": ["dp"] }, { "required": ["dq"] }, { "required": ["qi"] }, { "required": ["oth"] },
+          { "required": ["k"] }, { "required": ["priv"] }
+        ]
+      },
+      "description": "A public JWK (RFC 7517). Private key members are forbidden."
+    },
+    "keyBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "custody", "verified_at"],
+      "description": "Why the key in `jwk` belongs to the signer, and who holds it.",
+      "properties": {
+        "method": {
+          "enum": ["did", "x509", "authority_verified"],
+          "description": "did: `jwk` is a verification method in the signer's DID document. x509: `jwk` is the public key of the first certificate in `x5c`, which is tied to the signer by an identifier listed in clear: a `dNSName` subjectAltName equal to one of its `domain` identifiers, an LEI (ISO 17442-2) equal to one of its `lei` identifiers, or the certificate's SHA-256 equal to one of its `x509_sha256` identifiers. authority_verified: the authority checked the signer's identity and recorded the key."
+        },
+        "did_url": { "type": "string", "pattern": "^did:[a-z0-9]+:[^\\s#]+#[^\\s#]+$", "description": "A DID URL with a fragment. Its only `#` is the fragment delimiter (RFC 3986 §3.5)." },
+        "x5c": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[A-Za-z0-9+/]+={0,2}$" }, "description": "Certificate chain, leaf first, standard base64 DER (RFC 7515 §4.1.6)." },
+        "custody": {
+          "enum": ["signer_held", "authority_managed"],
+          "description": "signer_held: only the signer controls the private key. authority_managed: the authority holds the key and signs when the signer authenticates."
+        },
+        "authentication": {
+          "enum": ["passkey", "identity_document_check", "in_person", "email_link", "sms_code", "other"],
+          "description": "For authority_managed keys: how the signer authenticated before the authority signed."
+        },
+        "verified_by": { "$ref": "#/$defs/httpsUri", "description": "The authority in charge at `verified_at`: it verified the binding, or holds the key." },
+        "verified_at": { "$ref": "#/$defs/dateTime" }
+      },
+      "allOf": [
+        { "if": { "required": ["method"], "properties": { "method": { "const": "did" } } }, "then": { "required": ["did_url"] }, "else": { "properties": { "did_url": false } } },
+        { "if": { "required": ["method"], "properties": { "method": { "const": "x509" } } }, "then": { "required": ["x5c"] }, "else": { "properties": { "x5c": false } } },
+        { "if": { "required": ["method"], "properties": { "method": { "const": "authority_verified" } } }, "then": { "required": ["verified_by"] } },
+        { "if": { "required": ["custody"], "properties": { "custody": { "const": "authority_managed" } } }, "then": { "required": ["authentication", "verified_by"] }, "else": { "properties": { "authentication": false } } }
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signer", "signed_at", "alg", "jwk", "kid", "value"],
+      "description": "A compact JWS (RFC 7515) with a detached, unencoded payload (RFC 7797). The payload is the RFC 8785 form of the signing statement that spec/README.md defines; a verifier rebuilds it from the record.",
+      "properties": {
+        "signer": { "$ref": "#/$defs/actorId" },
+        "signed_at": { "$ref": "#/$defs/dateTime" },
+        "alg": { "enum": ["ES256", "ES384", "Ed25519", "ML-DSA-65", "PS256"], "description": "Fully specified algorithms. `Ed25519` as registered by RFC 9864, `ML-DSA-65` by RFC 9964." },
+        "jwk": { "$ref": "#/$defs/publicJwk" },
+        "kid": { "$ref": "#/$defs/sha256Base64url", "description": "RFC 7638 SHA-256 thumbprint of `jwk`, also the `kid` of the protected header." },
+        "key_binding": { "$ref": "#/$defs/keyBinding" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+\\.\\.[A-Za-z0-9_-]+$",
+          "description": "`<protected header>..<signature>`. The header is exactly {alg, b64: false, crit: [\"b64\"], kid}."
+        },
+        "timestamp_token": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+          "description": "Optional RFC 3161 time-stamp token, standard base64 DER, over SHA-256 of the decoded JWS signature bytes. On an agreement or event signature it cannot be added later: once the version or event is recorded, the record's digests cover it."
+        }
+      },
+      "if": { "required": ["signer"], "properties": { "signer": { "$ref": "#/$defs/localId" } } },
+      "then": { "required": ["key_binding"] },
+      "else": { "properties": { "key_binding": false } }
+    },
+
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["as_of", "freshness", "term_states", "events"],
+      "description": "The mutable part, covered by the authority attestation.",
+      "properties": {
+        "as_of": { "$ref": "#/$defs/dateTime", "description": "The instant this response describes." },
+        "freshness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max_age_seconds"],
+          "description": "A consumer relies on this response until the earlier of `as_of` + `max_age_seconds` and `next_change_at`.",
+          "properties": {
+            "max_age_seconds": { "type": "integer", "minimum": 0, "maximum": 2592000 },
+            "next_change_at": { "$ref": "#/$defs/dateTime", "description": "The next instant after `as_of` at which a term state changes on its own, if any." }
+          }
+        },
+        "term_states": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/termState" },
+          "description": "One entry per term id of the versions that have taken effect by `as_of`, derived at `as_of` from `agreements` and `events`. A verifier that recomputes them and finds a difference rejects the response."
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "allOf": [
+                { "$ref": "#/$defs/event" },
+                { "properties": { "seq": { "const": 1 }, "type": { "const": "issued" }, "prev_digest": { "const": null } } }
+              ]
+            }
+          ],
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/event" },
+              { "properties": { "type": { "not": { "const": "issued" } }, "prev_digest": { "$ref": "#/$defs/sha256Base64url" } } }
+            ]
+          },
+          "description": "Append-only history, oldest first. The first event is `issued`; each later one carries the digest of the one before."
+        },
+        "payments": { "type": "array", "items": { "$ref": "#/$defs/payment" } },
+        "asset_bindings": { "type": "array", "items": { "$ref": "#/$defs/assetBinding" } }
+      }
+    },
+
+    "effectiveScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media_types", "channels", "territories"],
+      "description": "A scope after narrowing. Lists may be empty, which permits nothing.",
+      "properties": {
+        "media_types": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/assetMediaType" } },
+        "channels": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/channel" } },
+        "territories": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["include"],
+          "properties": {
+            "include": { "type": "array", "uniqueItems": true, "items": { "type": "string", "anyOf": [{ "$ref": "#/$defs/countryCode" }, { "const": "WORLD" }] } },
+            "exclude": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/countryCode" } }
+          }
+        },
+        "exclusivity": { "enum": ["exclusive", "non_exclusive"] },
+        "sublicensing": { "$ref": "#/$defs/sublicensing" },
+        "max_assets": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "named_works": { "type": "array", "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/text" } },
+        "prohibited_contexts": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/prohibitedContext" } }
+      }
+    },
+    "termState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term_id", "status", "since", "version", "narrowed"],
+      "properties": {
+        "term_id": { "$ref": "#/$defs/localId" },
+        "status": { "enum": ["in_force", "not_yet_valid", "suspended", "withdrawn", "ended"] },
+        "since": { "$ref": "#/$defs/dateTime", "description": "When the current status began. `withdrawn` and `ended` are final." },
+        "end_reason": { "enum": ["valid_until_reached", "ended_early", "dropped_by_version"] },
+        "version": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "description": "The version whose text applies: the version in force, or the last version that contained the term. For a withdrawn or ended term, as at `since`." },
+        "narrowed": { "type": "boolean" },
+        "effective": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["uses", "scope", "licensees", "valid_from", "valid_until"],
+          "description": "For grants: the grant after every narrowing. For a withdrawn or ended grant, as at `since`.",
+          "properties": {
+            "uses": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "anyOf": [{ "$ref": "#/$defs/identityUse" }, { "$ref": "#/$defs/assetUse" }] } },
+            "identity_attributes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/identityAttribute" } },
+            "scope": { "$ref": "#/$defs/effectiveScope" },
+            "licensees": { "type": "array", "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" } },
+            "valid_from": { "$ref": "#/$defs/dateTime" },
+            "valid_until": { "$ref": "#/$defs/dateTime" }
+          }
+        }
+      },
+      "if": { "required": ["status"], "properties": { "status": { "const": "ended" } } },
+      "then": { "required": ["end_reason"] },
+      "else": { "properties": { "end_reason": false } }
+    },
+
+    "narrowing": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "Operations that can only narrow a grant. They are cumulative and outlive later versions. Widening needs a new version or a new term.",
+      "properties": {
+        "remove_uses": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "anyOf": [{ "$ref": "#/$defs/identityUse" }, { "$ref": "#/$defs/assetUse" }] } },
+        "remove_identity_attributes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/identityAttribute" } },
+        "remove_media_types": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/assetMediaType" } },
+        "remove_channels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/channel" } },
+        "remove_territories": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/countryCode" } },
+        "add_prohibited_contexts": { "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/prohibitedContext" } },
+        "remove_licensees": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" } },
+        "remove_sublicensees": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" } },
+        "forbid_sublicensing": { "const": true },
+        "restrict_named_works": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/text" } },
+        "lower_max_assets": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+        "end_earlier": { "$ref": "#/$defs/dateTime" }
+      }
+    },
+
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seq", "type", "recorded_at", "effective_at", "actor", "channel", "prev_digest"],
+      "properties": {
+        "seq": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "type": {
+          "enum": ["issued", "version_added", "narrowed", "suspended", "resumed", "withdrawn", "payment_recorded", "payment_confirmed", "payment_disputed", "payment_refunded", "asset_bound", "asset_unbound", "authority_transferred", "correction"]
+        },
+        "recorded_at": { "$ref": "#/$defs/dateTime", "description": "When the authority appended the event." },
+        "received_at": { "$ref": "#/$defs/dateTime", "description": "For instructions from a party: when the authority received them. A narrowing, suspension or withdrawal from a party takes effect at this instant, or later only when `actor_signature` covers the later `effective_at`." },
+        "effective_at": { "$ref": "#/$defs/dateTime", "description": "When the event takes effect. Not before `recorded_at`, except for payment events and for a narrowing, suspension or withdrawal from a party (see `received_at`)." },
+        "actor": { "$ref": "#/$defs/actorId", "description": "Who caused the event: a `party_id`, or an authority `id`." },
+        "on_behalf_of": { "$ref": "#/$defs/localId", "description": "When an authorized representative acts: the participant's `party_id`." },
+        "channel": { "enum": ["authority_portal", "api", "email", "written_letter", "in_person", "via_representative", "system", "other"], "description": "How the authority received the instruction." },
+        "term_ids": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" } },
+        "narrowing": { "$ref": "#/$defs/narrowing" },
+        "version": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "description": "For `issued` and `version_added`: the version that takes effect." },
+        "ref": { "$ref": "#/$defs/localId", "description": "The `payment_id` or `binding_id` concerned." },
+        "ref_seq": { "type": "integer", "minimum": 1, "maximum": 9007199254740991, "description": "For `resumed`: the `suspended` event lifted. For `correction`: the event corrected." },
+        "ref_digest": { "$ref": "#/$defs/sha256Base64url", "description": "For `issued` and `version_added`: the digest of the whole `agreements` item (`agreement`, `agreement_digest` and `signatures`), so the event chain fixes the signatures too. For `payment_recorded` and `asset_bound`: the digest of the payment or binding object." },
+        "to_authority": { "$ref": "#/$defs/httpsUri", "description": "For `authority_transferred`: the receiving authority." },
+        "keys_uri": { "$ref": "#/$defs/httpsUri", "description": "For `authority_transferred`: the JWK Set of the transferring authority, on its origin, listing the key of `actor_signature`." },
+        "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/digest" }, "description": "Digests of what was received, for example the withdrawal e-mail." },
+        "note": { "$ref": "#/$defs/text" },
+        "actor_signature": { "$ref": "#/$defs/signature", "description": "Signature by the actor. For `authority_transferred` it is required and covers the whole event without this member, and with it the history before the event. Otherwise it is optional and covers the instruction members." },
+        "prev_digest": {
+          "anyOf": [{ "$ref": "#/$defs/sha256Base64url" }, { "type": "null" }],
+          "description": "base64url(SHA-256(UTF-8(JCS(previous event)))). null for the first event."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["type"], "properties": { "type": { "enum": ["issued", "version_added"] } } },
+          "then": { "required": ["version", "ref_digest"], "properties": { "actor": { "$ref": "#/$defs/httpsUri" } } },
+          "else": { "properties": { "version": false } }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "enum": ["narrowed", "suspended", "resumed", "withdrawn"] } } },
+          "then": { "required": ["term_ids"] },
+          "else": { "properties": { "term_ids": false } }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "narrowed" } } },
+          "then": { "required": ["narrowing"] },
+          "else": { "properties": { "narrowing": false } }
+        },
+        { "if": { "required": ["type"], "properties": { "type": { "enum": ["narrowed", "withdrawn"] } } }, "then": { "required": ["received_at"], "properties": { "actor": { "$ref": "#/$defs/localId" } } } },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "enum": ["payment_recorded", "payment_confirmed", "payment_disputed", "payment_refunded", "asset_bound", "asset_unbound"] } } },
+          "then": { "required": ["ref"] },
+          "else": { "properties": { "ref": false } }
+        },
+        { "if": { "required": ["type"], "properties": { "type": { "enum": ["payment_recorded", "asset_bound"] } } }, "then": { "required": ["ref_digest"] } },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "enum": ["issued", "version_added", "payment_recorded", "asset_bound"] } } },
+          "else": { "properties": { "ref_digest": false } }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "enum": ["resumed", "correction"] } } },
+          "then": { "required": ["ref_seq"] },
+          "else": { "properties": { "ref_seq": false } }
+        },
+        { "if": { "required": ["type"], "properties": { "type": { "const": "correction" } } }, "then": { "required": ["note"] } },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "authority_transferred" } } },
+          "then": { "required": ["to_authority", "keys_uri", "actor_signature"], "properties": { "actor": { "$ref": "#/$defs/httpsUri" } } },
+          "else": { "properties": { "to_authority": false, "keys_uri": false } }
+        }
+      ]
+    },
+
+    "payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["payment_id", "compensation_id", "paid_at", "amount", "method", "evidence"],
+      "description": "Evidence that a payment was made. It never changes once recorded; its status follows from the payment events. The authority does not move money.",
+      "properties": {
+        "payment_id": { "$ref": "#/$defs/localId" },
+        "compensation_id": { "$ref": "#/$defs/localId", "description": "The compensation item paid, as it stands at `paid_at` (R15). Its payer and payee are the parties of every event about this payment." },
+        "paid_at": { "$ref": "#/$defs/dateTime" },
+        "amount": { "$ref": "#/$defs/disclosableMoney" },
+        "method": { "enum": ["bank_transfer", "card", "payment_platform", "invoice_settlement", "crypto_transfer", "other"] },
+        "reference": { "$ref": "#/$defs/disclosableText", "description": "Invoice number, transfer reference or transaction id. Never an account or card number." },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "digest"],
+            "properties": {
+              "kind": { "enum": ["invoice", "receipt", "bank_confirmation", "transaction", "other"] },
+              "digest": { "$ref": "#/$defs/digest" }
+            }
+          }
+        }
+      }
+    },
+
+    "assetBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_id", "registered_by", "term_ids", "media_type", "c2pa"],
+      "description": "Registers one C2PA manifest as made under the listed grants. It never changes once recorded; `asset_unbound` ends it.",
+      "properties": {
+        "binding_id": { "$ref": "#/$defs/localId" },
+        "registered_by": { "$ref": "#/$defs/localId", "description": "The licensee that registered the asset." },
+        "term_ids": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "type": "string", "$ref": "#/$defs/localId" } },
+        "media_type": { "$ref": "#/$defs/assetMediaType", "description": "The kind of asset, checked against the media types of the named grants." },
+        "mime_type": { "$ref": "#/$defs/mediaTypeName", "description": "The asset's media type (RFC 6838), for example `image/jpeg`." },
+        "c2pa": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["manifest_label", "claim_signer"],
+          "properties": {
+            "manifest_label": {
+              "type": "string",
+              "pattern": "^urn:(c2pa|uuid):[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}(:[^\\s]*)?$",
+              "description": "Label of the C2PA manifest that carries the `cawg.consent` reference to this record."
+            },
+            "claim_signer": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["serial_number"],
+              "description": "The certificate that signed the claim.",
+              "properties": {
+                "serial_number": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$", "description": "Serial number of the signing certificate, in decimal." },
+                "subject_common_name": { "$ref": "#/$defs/text" },
+                "subject_organization": { "$ref": "#/$defs/text" },
+                "certificate_sha256": { "$ref": "#/$defs/sha256Base64url", "description": "SHA-256 of the DER-encoded signing certificate." }
+              }
+            },
+            "hard_binding": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["url", "alg", "hash"],
+              "description": "The claim's hashed URI reference to its hard-binding assertion.",
+              "properties": {
+                "url": { "type": "string", "pattern": "^self#jumbf=(/c2pa/[^/\\s]+/)?c2pa\\.assertions/c2pa\\.hash\\.[A-Za-z0-9._-]+$" },
+                "alg": { "enum": ["sha256", "sha384", "sha512"], "description": "The algorithm in effect for the reference, written out even when the claim leaves it implicit." },
+                "hash": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$", "description": "The hash bytes, base64url without padding." }
+              },
+              "allOf": [
+                { "if": { "required": ["alg"], "properties": { "alg": { "const": "sha256" } } }, "then": { "properties": { "hash": { "minLength": 43, "maxLength": 43 } } } },
+                { "if": { "required": ["alg"], "properties": { "alg": { "const": "sha384" } } }, "then": { "properties": { "hash": { "minLength": 64, "maxLength": 64 } } } },
+                { "if": { "required": ["alg"], "properties": { "alg": { "const": "sha512" } } }, "then": { "properties": { "hash": { "minLength": 86, "maxLength": 86 } } } }
+              ]
+            }
+          }
+        },
+        "asset_digest": { "$ref": "#/$defs/digest", "description": "SHA-256 of the exact file bytes as registered." }
+      }
+    }
+  }
+}

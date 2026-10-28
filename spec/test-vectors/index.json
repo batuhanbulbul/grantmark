@@ -1,0 +1,1866 @@
+{
+  "profile": "https://grantmark.example/spec/consent-authority-record/0.2.0",
+  "count": 310,
+  "cases": [
+    {
+      "id": "001",
+      "file": "cases/001-unchanged-example.json",
+      "description": "unchanged example",
+      "expect": "valid"
+    },
+    {
+      "id": "002",
+      "file": "cases/002-representative-withdraws-on-the-participant-s-behalf.json",
+      "description": "representative withdraws on the participant's behalf",
+      "expect": "valid"
+    },
+    {
+      "id": "003",
+      "file": "cases/003-authority-suspends-and-resumes-since-moves-to-the-resumption.json",
+      "description": "authority suspends and resumes; since moves to the resumption",
+      "expect": "valid"
+    },
+    {
+      "id": "004",
+      "file": "cases/004-a-narrowing-outlives-a-later-version-that-restates-the-remov.json",
+      "description": "a narrowing outlives a later version that restates the removed territory",
+      "expect": "valid"
+    },
+    {
+      "id": "005",
+      "file": "cases/005-term-states-shows-a-territory-restored-by-a-later-version.json",
+      "description": "term_states shows a territory restored by a later version",
+      "expect": "R17"
+    },
+    {
+      "id": "006",
+      "file": "cases/006-two-participants.json",
+      "description": "two participants",
+      "expect": "schema"
+    },
+    {
+      "id": "007",
+      "file": "cases/007-participant-is-an-organization.json",
+      "description": "participant is an organization",
+      "expect": "schema"
+    },
+    {
+      "id": "008",
+      "file": "cases/008-participant-is-also-a-licensee.json",
+      "description": "participant is also a licensee",
+      "expect": "schema"
+    },
+    {
+      "id": "009",
+      "file": "cases/009-world-in-exclude.json",
+      "description": "WORLD in exclude",
+      "expect": "schema"
+    },
+    {
+      "id": "010",
+      "file": "cases/010-world-together-with-countries.json",
+      "description": "WORLD together with countries",
+      "expect": "schema"
+    },
+    {
+      "id": "011",
+      "file": "cases/011-exclude-with-a-country-list.json",
+      "description": "exclude with a country list",
+      "expect": "schema"
+    },
+    {
+      "id": "012",
+      "file": "cases/012-unpaid-with-an-amount.json",
+      "description": "unpaid with an amount",
+      "expect": "schema"
+    },
+    {
+      "id": "013",
+      "file": "cases/013-royalty-100-5-percent.json",
+      "description": "royalty 100.5 percent",
+      "expect": "schema"
+    },
+    {
+      "id": "014",
+      "file": "cases/014-royalty-without-a-percentage.json",
+      "description": "royalty without a percentage",
+      "expect": "schema"
+    },
+    {
+      "id": "015",
+      "file": "cases/015-flat-fee-with-a-cap.json",
+      "description": "flat fee with a cap",
+      "expect": "schema"
+    },
+    {
+      "id": "016",
+      "file": "cases/016-prohibition-with-licensees.json",
+      "description": "prohibition with licensees",
+      "expect": "schema"
+    },
+    {
+      "id": "017",
+      "file": "cases/017-prohibition-with-a-scope.json",
+      "description": "prohibition with a scope",
+      "expect": "schema"
+    },
+    {
+      "id": "018",
+      "file": "cases/018-grant-without-valid-until.json",
+      "description": "grant without valid_until",
+      "expect": "schema"
+    },
+    {
+      "id": "019",
+      "file": "cases/019-identity-term-with-declared-by.json",
+      "description": "identity term with declared_by",
+      "expect": "schema"
+    },
+    {
+      "id": "020",
+      "file": "cases/020-asset-term-without-declared-by.json",
+      "description": "asset term without declared_by",
+      "expect": "schema"
+    },
+    {
+      "id": "021",
+      "file": "cases/021-asset-term-with-an-identity-use.json",
+      "description": "asset term with an identity use",
+      "expect": "schema"
+    },
+    {
+      "id": "022",
+      "file": "cases/022-identity-term-with-an-asset-use.json",
+      "description": "identity term with an asset use",
+      "expect": "schema"
+    },
+    {
+      "id": "023",
+      "file": "cases/023-date-time-with-an-offset-instead-of-z.json",
+      "description": "date-time with an offset instead of Z",
+      "expect": "schema"
+    },
+    {
+      "id": "024",
+      "file": "cases/024-version-1-with-previous-version-digest.json",
+      "description": "version 1 with previous_version_digest",
+      "expect": "schema"
+    },
+    {
+      "id": "025",
+      "file": "cases/025-version-2-without-previous-version-digest.json",
+      "description": "version 2 without previous_version_digest",
+      "expect": "schema"
+    },
+    {
+      "id": "026",
+      "file": "cases/026-second-issued-event.json",
+      "description": "second issued event",
+      "expect": "schema"
+    },
+    {
+      "id": "027",
+      "file": "cases/027-first-event-is-not-issued.json",
+      "description": "first event is not issued",
+      "expect": "schema"
+    },
+    {
+      "id": "028",
+      "file": "cases/028-narrowed-without-received-at.json",
+      "description": "narrowed without received_at",
+      "expect": "schema"
+    },
+    {
+      "id": "029",
+      "file": "cases/029-narrowing-removes-world.json",
+      "description": "narrowing removes WORLD",
+      "expect": "schema"
+    },
+    {
+      "id": "030",
+      "file": "cases/030-the-authority-narrows.json",
+      "description": "the authority narrows",
+      "expect": "schema"
+    },
+    {
+      "id": "031",
+      "file": "cases/031-view-member.json",
+      "description": "top-level view member, which the profile does not define",
+      "expect": "schema"
+    },
+    {
+      "id": "032",
+      "file": "cases/032-representative-without-authorization-evidence.json",
+      "description": "representative without authorization evidence",
+      "expect": "schema"
+    },
+    {
+      "id": "033",
+      "file": "cases/033-verification-on-a-non-participant.json",
+      "description": "verification on a non-participant",
+      "expect": "schema"
+    },
+    {
+      "id": "034",
+      "file": "cases/034-malformed-manifest-label.json",
+      "description": "malformed manifest label",
+      "expect": "schema"
+    },
+    {
+      "id": "035",
+      "file": "cases/035-hard-binding-hash-of-the-wrong-length.json",
+      "description": "hard binding hash of the wrong length",
+      "expect": "schema"
+    },
+    {
+      "id": "036",
+      "file": "cases/036-retain-without-use-without-retain-until.json",
+      "description": "retain_without_use without retain_until",
+      "expect": "schema"
+    },
+    {
+      "id": "037",
+      "file": "cases/037-biometric-kinds-while-nothing-is-collected.json",
+      "description": "biometric kinds while nothing is collected",
+      "expect": "schema"
+    },
+    {
+      "id": "038",
+      "file": "cases/038-authority-holds-biometrics.json",
+      "description": "authority holds biometrics",
+      "expect": "schema"
+    },
+    {
+      "id": "039",
+      "file": "cases/039-authority-managed-key-without-authentication.json",
+      "description": "authority-managed key without authentication",
+      "expect": "schema"
+    },
+    {
+      "id": "040",
+      "file": "cases/040-sublicensing-not-allowed-but-names-sublicensees.json",
+      "description": "sublicensing not allowed but names sublicensees",
+      "expect": "schema"
+    },
+    {
+      "id": "041",
+      "file": "cases/041-language-tag-that-is-not-bcp-47.json",
+      "description": "language tag that is not BCP 47",
+      "expect": "schema"
+    },
+    {
+      "id": "042",
+      "file": "cases/042-private-key-member-in-a-jwk.json",
+      "description": "private key member in a jwk",
+      "expect": "schema"
+    },
+    {
+      "id": "043",
+      "file": "cases/043-deprecated-eddsa-algorithm-name.json",
+      "description": "deprecated EdDSA algorithm name",
+      "expect": "schema"
+    },
+    {
+      "id": "044",
+      "file": "cases/044-key-binding-on-the-authority-attestation.json",
+      "description": "key_binding on the authority attestation",
+      "expect": "schema"
+    },
+    {
+      "id": "045",
+      "file": "cases/045-version-2-names-another-record.json",
+      "description": "version 2 names another record",
+      "expect": "R1"
+    },
+    {
+      "id": "046",
+      "file": "cases/046-version-2-names-the-wrong-previous-version.json",
+      "description": "version 2 names the wrong previous version",
+      "expect": "R1"
+    },
+    {
+      "id": "047",
+      "file": "cases/047-agreement-changed-after-signing.json",
+      "description": "agreement changed after signing",
+      "expect": "R2"
+    },
+    {
+      "id": "048",
+      "file": "cases/048-licensee-without-the-licensee-role.json",
+      "description": "licensee without the licensee role",
+      "expect": "R3"
+    },
+    {
+      "id": "049",
+      "file": "cases/049-payer-without-the-payer-role.json",
+      "description": "payer without the payer role",
+      "expect": "R3"
+    },
+    {
+      "id": "050",
+      "file": "cases/050-representative-represents-someone-else.json",
+      "description": "representative represents someone else",
+      "expect": "R3"
+    },
+    {
+      "id": "051",
+      "file": "cases/051-grant-longer-than-ten-years.json",
+      "description": "grant longer than ten years",
+      "expect": "R4"
+    },
+    {
+      "id": "052",
+      "file": "cases/052-consent-document-signed-before-it-was-presented.json",
+      "description": "consent document signed before it was presented",
+      "expect": "R4"
+    },
+    {
+      "id": "053",
+      "file": "cases/053-declared-by-changes-between-versions.json",
+      "description": "declared_by changes between versions",
+      "expect": "R5"
+    },
+    {
+      "id": "054",
+      "file": "cases/054-participant-party-id-changes-between-versions.json",
+      "description": "participant party_id changes between versions",
+      "expect": "R5"
+    },
+    {
+      "id": "055",
+      "file": "cases/055-the-representative-signs-version-2-in-the-participant-s-plac.json",
+      "description": "the representative signs version 2 in the participant's place",
+      "expect": "R6"
+    },
+    {
+      "id": "056",
+      "file": "cases/056-participant-signs-before-the-consent-document-is-presented.json",
+      "description": "participant signs before the consent document is presented",
+      "expect": "R6"
+    },
+    {
+      "id": "057",
+      "file": "cases/057-did-url-names-another-did.json",
+      "description": "did_url names another DID",
+      "expect": "R6"
+    },
+    {
+      "id": "058",
+      "file": "cases/058-a-party-signs-twice.json",
+      "description": "a party signs twice",
+      "expect": "R6"
+    },
+    {
+      "id": "059",
+      "file": "cases/059-tampered-signature-bytes.json",
+      "description": "tampered signature bytes",
+      "expect": "R7"
+    },
+    {
+      "id": "060",
+      "file": "cases/060-kid-is-not-the-thumbprint.json",
+      "description": "kid is not the thumbprint",
+      "expect": "R7"
+    },
+    {
+      "id": "061",
+      "file": "cases/061-signature-moved-to-another-signer.json",
+      "description": "signature moved to another signer",
+      "expect": "R7"
+    },
+    {
+      "id": "062",
+      "file": "cases/062-an-event-is-edited.json",
+      "description": "an event is edited",
+      "expect": "R8"
+    },
+    {
+      "id": "063",
+      "file": "cases/063-an-event-is-removed.json",
+      "description": "an event is removed",
+      "expect": "R8"
+    },
+    {
+      "id": "064",
+      "file": "cases/064-event-recorded-after-as-of.json",
+      "description": "event recorded after as_of",
+      "expect": "R8"
+    },
+    {
+      "id": "065",
+      "file": "cases/065-version-2-takes-effect-before-the-participant-signs.json",
+      "description": "version 2 takes effect before the participant signs",
+      "expect": "R9"
+    },
+    {
+      "id": "066",
+      "file": "cases/066-issued-names-the-wrong-agreement-digest.json",
+      "description": "issued names the wrong agreement digest",
+      "expect": "R9"
+    },
+    {
+      "id": "067",
+      "file": "cases/067-an-event-by-another-authority.json",
+      "description": "an event by another authority",
+      "expect": "R10"
+    },
+    {
+      "id": "068",
+      "file": "cases/068-record-served-by-an-authority-nobody-instructed.json",
+      "description": "record served by an authority nobody instructed",
+      "expect": "R10"
+    },
+    {
+      "id": "069",
+      "file": "cases/069-withdrawal-takes-effect-before-it-is-received.json",
+      "description": "withdrawal takes effect before it is received",
+      "expect": "R11"
+    },
+    {
+      "id": "070",
+      "file": "cases/070-the-licensee-narrows-the-grant.json",
+      "description": "the licensee narrows the grant",
+      "expect": "R12"
+    },
+    {
+      "id": "071",
+      "file": "cases/071-the-payer-confirms-its-own-payment.json",
+      "description": "the payer confirms its own payment",
+      "expect": "R12"
+    },
+    {
+      "id": "072",
+      "file": "cases/072-on-behalf-of-used-by-the-participant.json",
+      "description": "on_behalf_of used by the participant",
+      "expect": "R12"
+    },
+    {
+      "id": "073",
+      "file": "cases/073-participant-lifts-the-authority-s-suspension.json",
+      "description": "participant lifts the authority's suspension",
+      "expect": "R12"
+    },
+    {
+      "id": "074",
+      "file": "cases/074-a-prohibition-is-narrowed.json",
+      "description": "a prohibition is narrowed",
+      "expect": "R13"
+    },
+    {
+      "id": "075",
+      "file": "cases/075-a-narrowing-that-changes-nothing.json",
+      "description": "a narrowing that changes nothing",
+      "expect": "R13"
+    },
+    {
+      "id": "076",
+      "file": "cases/076-a-withdrawn-grant-is-withdrawn-again.json",
+      "description": "a withdrawn grant is withdrawn again",
+      "expect": "R13"
+    },
+    {
+      "id": "077",
+      "file": "cases/077-end-earlier-after-the-current-end.json",
+      "description": "end_earlier after the current end",
+      "expect": "R13"
+    },
+    {
+      "id": "078",
+      "file": "cases/078-actor-signature-by-another-party.json",
+      "description": "actor_signature by another party",
+      "expect": "R14"
+    },
+    {
+      "id": "079",
+      "file": "cases/079-actor-signs-after-the-authority-received-the-instruction.json",
+      "description": "actor signs after the authority received the instruction",
+      "expect": "R14"
+    },
+    {
+      "id": "080",
+      "file": "cases/080-payment-for-unknown-compensation.json",
+      "description": "payment for unknown compensation",
+      "expect": "R15"
+    },
+    {
+      "id": "081",
+      "file": "cases/081-a-sublicensee-registers-an-asset.json",
+      "description": "a sublicensee registers an asset",
+      "expect": "R16"
+    },
+    {
+      "id": "082",
+      "file": "cases/082-asset-of-a-media-type-the-grant-does-not-cover.json",
+      "description": "asset of a media type the grant does not cover",
+      "expect": "R16"
+    },
+    {
+      "id": "083",
+      "file": "cases/083-asset-registered-before-the-grant-starts.json",
+      "description": "asset registered before the grant starts",
+      "expect": "R16"
+    },
+    {
+      "id": "084",
+      "file": "cases/084-term-states-hides-a-withdrawal.json",
+      "description": "term_states hides a withdrawal",
+      "expect": "R17"
+    },
+    {
+      "id": "085",
+      "file": "cases/085-term-states-shows-a-wider-territory-than-the-narrowing-allow.json",
+      "description": "term_states shows a wider territory than the narrowing allows",
+      "expect": "R17"
+    },
+    {
+      "id": "086",
+      "file": "cases/086-term-states-omits-a-term.json",
+      "description": "term_states omits a term",
+      "expect": "R17"
+    },
+    {
+      "id": "087",
+      "file": "cases/087-wrong-next-change-at.json",
+      "description": "wrong next_change_at",
+      "expect": "R18"
+    },
+    {
+      "id": "088",
+      "file": "cases/088-missing-next-change-at.json",
+      "description": "missing next_change_at",
+      "expect": "R18"
+    },
+    {
+      "id": "089",
+      "file": "cases/089-disclosed-amount-changed.json",
+      "description": "disclosed amount changed",
+      "expect": "R19"
+    },
+    {
+      "id": "090",
+      "file": "cases/090-cap-in-another-currency.json",
+      "description": "cap in another currency",
+      "expect": "R19"
+    },
+    {
+      "id": "091",
+      "file": "cases/091-attestation-not-made-at-as-of.json",
+      "description": "attestation not made at as_of",
+      "expect": "R20"
+    },
+    {
+      "id": "092",
+      "file": "cases/092-attested-state-changed.json",
+      "description": "attested state changed",
+      "expect": "R20"
+    },
+    {
+      "id": "093",
+      "file": "cases/093-a-binding-is-changed-after-it-was-recorded.json",
+      "description": "a binding is changed after it was recorded",
+      "expect": "R20"
+    },
+    {
+      "id": "094",
+      "file": "cases/094-authority-hands-the-record-to-its-successor.json",
+      "description": "authority hands the record to its successor",
+      "expect": "valid"
+    },
+    {
+      "id": "095",
+      "file": "cases/095-an-event-by-the-old-authority-after-the-hand-over.json",
+      "description": "an event by the old authority after the hand-over",
+      "expect": "R10"
+    },
+    {
+      "id": "096",
+      "file": "cases/096-the-successor-signs-its-own-hand-over.json",
+      "description": "the successor signs its own hand-over",
+      "expect": "R14"
+    },
+    {
+      "id": "097",
+      "file": "cases/097-a-hand-over-that-takes-effect-after-it-is-recorded.json",
+      "description": "a hand-over that takes effect after it is recorded",
+      "expect": "R10"
+    },
+    {
+      "id": "098",
+      "file": "cases/098-hand-over-keys-uri-on-the-successor-s-origin.json",
+      "description": "hand-over keys_uri on the successor's origin",
+      "expect": "R10"
+    },
+    {
+      "id": "099",
+      "file": "cases/099-an-authority-hands-the-record-over-to-itself.json",
+      "description": "an authority hands the record over to itself",
+      "expect": "R10"
+    },
+    {
+      "id": "100",
+      "file": "cases/100-hand-over-without-keys-uri.json",
+      "description": "hand-over without keys_uri",
+      "expect": "schema"
+    },
+    {
+      "id": "101",
+      "file": "cases/101-the-successor-replays-the-hand-over-signature-on-a-history-w.json",
+      "description": "the successor replays the hand-over signature on a history without the withdrawal",
+      "expect": "R7"
+    },
+    {
+      "id": "102",
+      "file": "cases/102-version-3-drops-the-asset-prohibition-and-omits-the-withdraw.json",
+      "description": "version 3 drops the asset prohibition and omits the withdrawn grant",
+      "expect": "valid"
+    },
+    {
+      "id": "103",
+      "file": "cases/103-version-3-restates-a-withdrawn-grant.json",
+      "description": "version 3 restates a withdrawn grant",
+      "expect": "R5"
+    },
+    {
+      "id": "104",
+      "file": "cases/104-after-the-hand-over-version-3-names-the-successor-and-the-su.json",
+      "description": "after the hand-over, version 3 names the successor and the successor records it",
+      "expect": "valid"
+    },
+    {
+      "id": "105",
+      "file": "cases/105-after-the-hand-over-version-3-still-names-the-old-authority.json",
+      "description": "after the hand-over, version 3 still names the old authority",
+      "expect": "R10"
+    },
+    {
+      "id": "106",
+      "file": "cases/106-version-2-names-a-new-authority-without-a-hand-over.json",
+      "description": "version 2 names a new authority without a hand-over",
+      "expect": "R10"
+    },
+    {
+      "id": "107",
+      "file": "cases/107-a-withdrawal-received-before-version-3-but-recorded-after-it.json",
+      "description": "a withdrawal received before version 3 but recorded after it stays final",
+      "expect": "valid"
+    },
+    {
+      "id": "108",
+      "file": "cases/108-the-participant-signs-a-withdrawal-for-a-later-date.json",
+      "description": "the participant signs a withdrawal for a later date",
+      "expect": "valid"
+    },
+    {
+      "id": "109",
+      "file": "cases/109-a-signed-later-withdrawal-not-announced-in-next-change-at.json",
+      "description": "a signed later withdrawal not announced in next_change_at",
+      "expect": "R18"
+    },
+    {
+      "id": "110",
+      "file": "cases/110-an-unsigned-withdrawal-that-takes-effect-after-it-was-receiv.json",
+      "description": "an unsigned withdrawal that takes effect after it was received",
+      "expect": "R11"
+    },
+    {
+      "id": "111",
+      "file": "cases/111-the-authority-defers-an-e-mail-withdrawal-by-months.json",
+      "description": "the authority defers an e-mail withdrawal by months",
+      "expect": "R11"
+    },
+    {
+      "id": "112",
+      "file": "cases/112-a-signed-withdrawal-for-a-later-date-then-version-3-drops-th.json",
+      "description": "a signed withdrawal for a later date, then version 3 drops the grant first",
+      "expect": "valid"
+    },
+    {
+      "id": "113",
+      "file": "cases/113-term-states-lets-the-later-withdrawal-override-the-earlier-d.json",
+      "description": "term_states lets the later withdrawal override the earlier drop",
+      "expect": "R17"
+    },
+    {
+      "id": "114",
+      "file": "cases/114-the-authority-backdates-a-suspension.json",
+      "description": "the authority backdates a suspension",
+      "expect": "R11"
+    },
+    {
+      "id": "115",
+      "file": "cases/115-a-resumption-backdated-before-it-was-recorded.json",
+      "description": "a resumption backdated before it was recorded",
+      "expect": "R11"
+    },
+    {
+      "id": "116",
+      "file": "cases/116-an-unbinding-backdated-before-it-was-recorded.json",
+      "description": "an unbinding backdated before it was recorded",
+      "expect": "R11"
+    },
+    {
+      "id": "117",
+      "file": "cases/117-a-version-event-backdated-before-it-was-recorded.json",
+      "description": "a version event backdated before it was recorded",
+      "expect": "R11"
+    },
+    {
+      "id": "118",
+      "file": "cases/118-an-asset-bound-after-the-withdrawal-backdated-before-it.json",
+      "description": "an asset bound after the withdrawal, backdated before it",
+      "expect": "R11"
+    },
+    {
+      "id": "119",
+      "file": "cases/119-an-asset-bound-after-the-withdrawal-of-its-grant.json",
+      "description": "an asset bound after the withdrawal of its grant",
+      "expect": "R16"
+    },
+    {
+      "id": "120",
+      "file": "cases/120-the-authority-lifts-its-suspension-of-a-grant-withdrawn-in-b.json",
+      "description": "the authority lifts its suspension of a grant withdrawn in between",
+      "expect": "R13"
+    },
+    {
+      "id": "121",
+      "file": "cases/121-payment-recorded-does-not-take-effect-at-paid-at.json",
+      "description": "payment_recorded does not take effect at paid_at",
+      "expect": "R15"
+    },
+    {
+      "id": "122",
+      "file": "cases/122-a-rights-holder-s-declaration-restated-unchanged-needs-no-ne.json",
+      "description": "a rights holder's declaration restated unchanged needs no new signature",
+      "expect": "valid"
+    },
+    {
+      "id": "123",
+      "file": "cases/123-version-1-carries-a-rights-holder-s-prohibition-without-its.json",
+      "description": "version 1 carries a rights holder's prohibition without its signature",
+      "expect": "R6"
+    },
+    {
+      "id": "124",
+      "file": "cases/124-version-2-drops-a-rights-holder-s-prohibition-without-its-si.json",
+      "description": "version 2 drops a rights holder's prohibition without its signature",
+      "expect": "R6"
+    },
+    {
+      "id": "125",
+      "file": "cases/125-version-2-weakens-a-rights-holder-s-prohibition-without-its.json",
+      "description": "version 2 weakens a rights holder's prohibition without its signature",
+      "expect": "R6"
+    },
+    {
+      "id": "126",
+      "file": "cases/126-version-2-adds-asset-rights-for-a-rights-holder-that-does-no.json",
+      "description": "version 2 adds asset_rights for a rights holder that does not sign",
+      "expect": "R6"
+    },
+    {
+      "id": "127",
+      "file": "cases/127-version-2-drops-an-asset-grant-its-rights-holder-had-withdra.json",
+      "description": "version 2 drops an asset grant its rights holder had withdrawn, without that holder",
+      "expect": "valid"
+    },
+    {
+      "id": "128",
+      "file": "cases/128-version-2-drops-a-live-asset-grant-without-its-rights-holder.json",
+      "description": "version 2 drops a live asset grant without its rights holder",
+      "expect": "R6"
+    },
+    {
+      "id": "129",
+      "file": "cases/129-a-payer-that-does-not-sign.json",
+      "description": "a payer that does not sign",
+      "expect": "R6"
+    },
+    {
+      "id": "130",
+      "file": "cases/130-an-organization-signs-with-a-key-from-a-did-it-lists-in-clea.json",
+      "description": "an organization signs with a key from a DID it lists in clear",
+      "expect": "valid"
+    },
+    {
+      "id": "131",
+      "file": "cases/131-an-organization-signs-with-a-key-from-a-did-it-lists-only-as.json",
+      "description": "an organization signs with a key from a DID it lists only as a commitment",
+      "expect": "R6"
+    },
+    {
+      "id": "132",
+      "file": "cases/132-remove-sublicensees-on-a-grant-whose-sublicensing-has-no-to.json",
+      "description": "remove_sublicensees on a grant whose sublicensing has no `to` list",
+      "expect": "R13"
+    },
+    {
+      "id": "133",
+      "file": "cases/133-a-removed-sublicensee-stays-removed-when-version-3-drops-the.json",
+      "description": "a removed sublicensee stays removed when version 3 drops the `to` list",
+      "expect": "valid"
+    },
+    {
+      "id": "134",
+      "file": "cases/134-a-record-that-only-declares-the-participant-s-prohibitions.json",
+      "description": "a record that only declares the participant's prohibitions",
+      "expect": "valid"
+    },
+    {
+      "id": "135",
+      "file": "cases/135-a-version-with-a-grant-but-without-end-of-use.json",
+      "description": "a version with a grant but without end_of_use",
+      "expect": "schema"
+    },
+    {
+      "id": "136",
+      "file": "cases/136-version-1-takes-effect-after-as-of.json",
+      "description": "version 1 takes effect after as_of",
+      "expect": "R9"
+    },
+    {
+      "id": "137",
+      "file": "cases/137-mime-type-of-another-kind-than-media-type.json",
+      "description": "mime_type of another kind than media_type",
+      "expect": "R16"
+    },
+    {
+      "id": "138",
+      "file": "cases/138-a-binding-without-media-type.json",
+      "description": "a binding without media_type",
+      "expect": "schema"
+    },
+    {
+      "id": "139",
+      "file": "cases/139-a-binding-with-a-mime-type-in-media-type.json",
+      "description": "a binding with a MIME type in media_type",
+      "expect": "schema"
+    },
+    {
+      "id": "140",
+      "file": "cases/140-withdrawal-notice-days-is-no-longer-part-of-end-of-use.json",
+      "description": "withdrawal_notice_days is no longer part of end_of_use",
+      "expect": "schema"
+    },
+    {
+      "id": "141",
+      "file": "cases/141-a-version-names-another-authority.json",
+      "description": "a version names another authority",
+      "expect": "R10"
+    },
+    {
+      "id": "142",
+      "file": "cases/142-removing-a-territory-from-a-world-grant-adds-it-to-exclude.json",
+      "description": "removing a territory from a WORLD grant adds it to exclude",
+      "expect": "valid"
+    },
+    {
+      "id": "143",
+      "file": "cases/143-removing-a-territory-that-is-already-excluded.json",
+      "description": "removing a territory that is already excluded",
+      "expect": "R13"
+    },
+    {
+      "id": "144",
+      "file": "cases/144-end-earlier-ends-the-grant-early-and-leaves-nothing-schedule.json",
+      "description": "end_earlier ends the grant early and leaves nothing scheduled",
+      "expect": "valid"
+    },
+    {
+      "id": "145",
+      "file": "cases/145-representative-suspends-participant-resumes.json",
+      "description": "representative suspends, participant resumes",
+      "expect": "valid"
+    },
+    {
+      "id": "146",
+      "file": "cases/146-a-suspension-in-force-at-as-of.json",
+      "description": "a suspension in force at as_of",
+      "expect": "valid"
+    },
+    {
+      "id": "147",
+      "file": "cases/147-asset-unbound-by-its-registrant.json",
+      "description": "asset unbound by its registrant",
+      "expect": "valid"
+    },
+    {
+      "id": "148",
+      "file": "cases/148-a-stranger-unbinds-an-asset.json",
+      "description": "a stranger unbinds an asset",
+      "expect": "R12"
+    },
+    {
+      "id": "149",
+      "file": "cases/149-registering-past-max-assets.json",
+      "description": "registering past max_assets",
+      "expect": "R16"
+    },
+    {
+      "id": "150",
+      "file": "cases/150-a-payment-recorded-under-version-1-stays-valid-when-version.json",
+      "description": "a payment recorded under version 1 stays valid when version 2 changes the item's payer",
+      "expect": "valid"
+    },
+    {
+      "id": "151",
+      "file": "cases/151-a-payer-named-only-by-a-later-version-records-a-payment-made.json",
+      "description": "a payer named only by a later version records a payment made under version 1",
+      "expect": "R12"
+    },
+    {
+      "id": "152",
+      "file": "cases/152-a-payment-recorded-before-the-version-that-adds-its-item.json",
+      "description": "a payment recorded before the version that adds its item",
+      "expect": "R15"
+    },
+    {
+      "id": "153",
+      "file": "cases/153-version-2-cuts-a-payee-s-fee-without-that-payee.json",
+      "description": "version 2 cuts a payee's fee without that payee",
+      "expect": "R6"
+    },
+    {
+      "id": "154",
+      "file": "cases/154-version-2-restates-a-payee-s-item-with-the-same-commitments.json",
+      "description": "version 2 restates a payee's item with the same commitments and unchanged grants; that payee need not sign",
+      "expect": "valid"
+    },
+    {
+      "id": "155",
+      "file": "cases/155-version-2-changes-a-grant-that-a-payee-s-unchanged-item-pays.json",
+      "description": "version 2 changes a grant that a payee's unchanged item pays for, without that payee",
+      "expect": "R6"
+    },
+    {
+      "id": "156",
+      "file": "cases/156-version-2-redirects-a-payee-s-item-without-that-payee.json",
+      "description": "version 2 redirects a payee's item without that payee",
+      "expect": "R6"
+    },
+    {
+      "id": "157",
+      "file": "cases/157-the-payee-a-payment-was-made-to-confirms-it-a-later-version.json",
+      "description": "the payee a payment was made to confirms it; a later version redirects the item",
+      "expect": "valid"
+    },
+    {
+      "id": "158",
+      "file": "cases/158-the-next-payee-confirms-a-payment-made-to-the-earlier-payee.json",
+      "description": "the next payee confirms a payment made to the earlier payee",
+      "expect": "R12"
+    },
+    {
+      "id": "159",
+      "file": "cases/159-a-payment-stays-resolvable-after-a-later-version-drops-its-c.json",
+      "description": "a payment stays resolvable after a later version drops its compensation item",
+      "expect": "valid"
+    },
+    {
+      "id": "160",
+      "file": "cases/160-a-rights-holder-drops-its-live-prohibition-and-leaves-the-pa.json",
+      "description": "a rights holder drops its live prohibition and leaves the parties in the same version",
+      "expect": "R6"
+    },
+    {
+      "id": "161",
+      "file": "cases/161-a-rights-holder-that-must-sign-a-version-is-not-listed-in-it.json",
+      "description": "a rights holder that must sign a version is not listed in it",
+      "expect": "R6"
+    },
+    {
+      "id": "162",
+      "file": "cases/162-version-2-changes-the-end-rule-of-a-rights-holder-s-asset-gr.json",
+      "description": "version 2 changes the end rule of a rights holder's asset grant without that holder",
+      "expect": "R6"
+    },
+    {
+      "id": "163",
+      "file": "cases/163-version-2-changes-the-end-rule-of-a-rights-holder-s-asset-gr.json",
+      "description": "version 2 changes the end rule of a rights holder's asset grant, signed by that holder",
+      "expect": "valid"
+    },
+    {
+      "id": "164",
+      "file": "cases/164-an-unchanged-biometric-declaration-needs-no-new-signature-fr.json",
+      "description": "an unchanged biometric declaration needs no new signature from its holder",
+      "expect": "valid"
+    },
+    {
+      "id": "165",
+      "file": "cases/165-version-2-changes-a-biometric-declaration-without-its-holder.json",
+      "description": "version 2 changes a biometric declaration without its holder",
+      "expect": "R6"
+    },
+    {
+      "id": "166",
+      "file": "cases/166-version-2-rebinds-another-party-s-did-without-that-party.json",
+      "description": "version 2 rebinds another party's DID without that party",
+      "expect": "R6"
+    },
+    {
+      "id": "167",
+      "file": "cases/167-version-2-drops-a-live-grant-without-its-licensee.json",
+      "description": "version 2 drops a live grant without its licensee",
+      "expect": "R6"
+    },
+    {
+      "id": "168",
+      "file": "cases/168-version-2-drops-a-grant-whose-licensee-a-narrowing-had-remov.json",
+      "description": "version 2 drops a grant whose licensee a narrowing had removed, without that licensee",
+      "expect": "valid"
+    },
+    {
+      "id": "169",
+      "file": "cases/169-end-earlier-before-valid-from-of-a-grant-that-has-not-starte.json",
+      "description": "end_earlier before valid_from of a grant that has not started",
+      "expect": "R13"
+    },
+    {
+      "id": "170",
+      "file": "cases/170-since-written-with-milliseconds-compares-as-an-instant.json",
+      "description": "since written with milliseconds compares as an instant",
+      "expect": "valid"
+    },
+    {
+      "id": "171",
+      "file": "cases/171-a-date-time-with-microseconds.json",
+      "description": "a date-time with microseconds",
+      "expect": "schema"
+    },
+    {
+      "id": "172",
+      "file": "cases/172-the-authority-records-a-signed-suspension-a-second-time-afte.json",
+      "description": "the authority records a signed suspension a second time after it was lifted",
+      "expect": "R14"
+    },
+    {
+      "id": "173",
+      "file": "cases/173-a-replayed-signed-suspension-with-since-moved-back-to-the-fi.json",
+      "description": "a replayed signed suspension, with since moved back to the first one",
+      "expect": "R14"
+    },
+    {
+      "id": "174",
+      "file": "cases/174-a-second-suspension-signed-anew-after-the-first-was-lifted.json",
+      "description": "a second suspension, signed anew, after the first was lifted",
+      "expect": "valid"
+    },
+    {
+      "id": "175",
+      "file": "cases/175-the-participant-withdraws-a-grant-of-a-version-that-takes-ef.json",
+      "description": "the participant withdraws a grant of a version that takes effect later",
+      "expect": "valid"
+    },
+    {
+      "id": "176",
+      "file": "cases/176-a-narrowing-ends-a-later-version-s-grant-before-that-version.json",
+      "description": "a narrowing ends a later version's grant before that version takes effect",
+      "expect": "R13"
+    },
+    {
+      "id": "177",
+      "file": "cases/177-a-withdrawal-names-a-term-that-no-recorded-version-contains.json",
+      "description": "a withdrawal names a term that no recorded version contains",
+      "expect": "R13"
+    },
+    {
+      "id": "178",
+      "file": "cases/178-a-version-that-restates-a-grant-does-not-cancel-its-pending.json",
+      "description": "a version that restates a grant does not cancel its pending signed withdrawal",
+      "expect": "valid"
+    },
+    {
+      "id": "179",
+      "file": "cases/179-one-commitment-stands-for-fields-of-different-names.json",
+      "description": "one commitment stands for fields of different names",
+      "expect": "R19"
+    },
+    {
+      "id": "180",
+      "file": "cases/180-one-commitment-stands-for-the-same-field-in-two-parties.json",
+      "description": "one commitment stands for the same field in two parties",
+      "expect": "valid"
+    },
+    {
+      "id": "181",
+      "file": "cases/181-the-successor-deletes-a-co-signature-of-version-1-and-leaves.json",
+      "description": "the successor deletes a co-signature of version 1 and leaves the chain as it was",
+      "expect": "R9"
+    },
+    {
+      "id": "182",
+      "file": "cases/182-the-successor-deletes-a-co-signature-of-version-1-and-relink.json",
+      "description": "the successor deletes a co-signature of version 1 and relinks the chain under the old hand-over signature",
+      "expect": "R7"
+    },
+    {
+      "id": "183",
+      "file": "cases/183-a-payment-for-an-item-that-the-version-in-force-has-dropped.json",
+      "description": "a payment for an item that the version in force has dropped is still accepted",
+      "expect": "valid"
+    },
+    {
+      "id": "184",
+      "file": "cases/184-a-payment-is-confirmed-with-an-effect-before-it-was-made.json",
+      "description": "a payment is confirmed with an effect before it was made",
+      "expect": "R15"
+    },
+    {
+      "id": "185",
+      "file": "cases/185-an-x509-key-binding-for-a-signer-that-lists-no-domain-or-lei.json",
+      "description": "an x509 key binding for a signer that lists no domain or lei in clear",
+      "expect": "R6"
+    },
+    {
+      "id": "186",
+      "file": "cases/186-an-x509-key-binding-for-a-signer-that-lists-its-domain-in-cl.json",
+      "description": "an x509 key binding for a signer that lists its domain in clear",
+      "expect": "valid"
+    },
+    {
+      "id": "187",
+      "file": "cases/187-consent-given-as-a-clause-of-another-agreement.json",
+      "description": "consent given as a clause of another agreement",
+      "expect": "valid"
+    },
+    {
+      "id": "188",
+      "file": "cases/188-version-2-sets-a-grant-s-end-before-version-2-takes-effect.json",
+      "description": "version 2 sets a grant's end before version 2 takes effect",
+      "expect": "R9"
+    },
+    {
+      "id": "189",
+      "file": "cases/189-version-2-moves-a-live-grant-s-start-later-it-is-not-yet-val.json",
+      "description": "version 2 moves a live grant's start later; it is not yet valid again",
+      "expect": "valid"
+    },
+    {
+      "id": "190",
+      "file": "cases/190-a-third-party-s-unchanged-item-named-by-unchanged-grants-nee.json",
+      "description": "a third party's unchanged item, named by unchanged grants, needs no new signature",
+      "expect": "valid"
+    },
+    {
+      "id": "191",
+      "file": "cases/191-version-2-lets-a-second-grant-draw-on-a-third-party-s-per-as.json",
+      "description": "version 2 lets a second grant draw on a third party's per-asset item without that party",
+      "expect": "R6"
+    },
+    {
+      "id": "192",
+      "file": "cases/192-version-2-points-a-grant-away-from-a-third-party-s-item-with.json",
+      "description": "version 2 points a grant away from a third party's item without that party",
+      "expect": "R6"
+    },
+    {
+      "id": "193",
+      "file": "cases/193-dropping-a-withdrawn-grant-changes-nothing-for-the-third-par.json",
+      "description": "dropping a withdrawn grant changes nothing for the third party its item pays",
+      "expect": "valid"
+    },
+    {
+      "id": "194",
+      "file": "cases/194-a-person-signs-with-a-certificate-whose-digest-the-party-lis.json",
+      "description": "a person signs with a certificate whose digest the party lists in clear",
+      "expect": "valid"
+    },
+    {
+      "id": "195",
+      "file": "cases/195-a-person-signs-with-a-certificate-the-party-does-not-list.json",
+      "description": "a person signs with a certificate the party does not list",
+      "expect": "R6"
+    },
+    {
+      "id": "196",
+      "file": "cases/196-one-key-signs-for-two-parties.json",
+      "description": "one key signs for two parties",
+      "expect": "R6"
+    },
+    {
+      "id": "197",
+      "file": "cases/197-a-refund-takes-effect-after-it-was-recorded.json",
+      "description": "a refund takes effect after it was recorded",
+      "expect": "R15"
+    },
+    {
+      "id": "198",
+      "file": "cases/198-a-representative-disputes-a-payment-for-the-participant.json",
+      "description": "a representative disputes a payment for the participant",
+      "expect": "valid"
+    },
+    {
+      "id": "199",
+      "file": "cases/199-a-version-moves-a-grant-s-start-past-an-end-already-set-by-a.json",
+      "description": "a version moves a grant's start past an end already set by a narrowing",
+      "expect": "R9"
+    },
+    {
+      "id": "200",
+      "file": "cases/200-version-1-carries-a-prohibition-that-ended-before-version-1.json",
+      "description": "version 1 carries a prohibition that ended before version 1 takes effect",
+      "expect": "R9"
+    },
+    {
+      "id": "201",
+      "file": "cases/201-a-payment-for-an-unpaid-item.json",
+      "description": "a payment for an unpaid item",
+      "expect": "R15"
+    },
+    {
+      "id": "202",
+      "file": "cases/202-an-unpaid-item-names-no-payer-or-payee.json",
+      "description": "an unpaid item names no payer or payee",
+      "expect": "valid"
+    },
+    {
+      "id": "203",
+      "file": "cases/203-an-unpaid-item-that-names-a-payer.json",
+      "description": "an unpaid item that names a payer",
+      "expect": "schema"
+    },
+    {
+      "id": "204",
+      "file": "cases/204-an-end-rule-says-no-replica-is-made.json",
+      "description": "an end rule says no replica is made",
+      "expect": "valid"
+    },
+    {
+      "id": "205",
+      "file": "cases/205-not-applicable-with-a-deadline.json",
+      "description": "not_applicable with a deadline",
+      "expect": "schema"
+    },
+    {
+      "id": "206",
+      "file": "cases/206-a-manifest-that-already-has-a-live-binding-is-bound-again.json",
+      "description": "a manifest that already has a live binding is bound again",
+      "expect": "R16"
+    },
+    {
+      "id": "207",
+      "file": "cases/207-a-manifest-is-unbound-and-then-bound-again.json",
+      "description": "a manifest is unbound and then bound again",
+      "expect": "valid"
+    },
+    {
+      "id": "208",
+      "file": "cases/208-version-2-rewords-a-grant-that-a-third-party-s-unchanged-ite.json",
+      "description": "version 2 rewords a grant that a third party's unchanged item pays for, without that party",
+      "expect": "R6"
+    },
+    {
+      "id": "209",
+      "file": "cases/209-version-2-changes-the-own-end-rule-of-a-grant-that-a-third-p.json",
+      "description": "version 2 changes the own end rule of a grant that a third party's item pays for, without that party",
+      "expect": "R6"
+    },
+    {
+      "id": "210",
+      "file": "cases/210-version-2-changes-the-agreement-s-end-rule-the-grant-a-third.json",
+      "description": "version 2 changes the agreement's end rule; the grant a third party's item pays for keeps its own",
+      "expect": "valid"
+    },
+    {
+      "id": "211",
+      "file": "cases/211-a-third-party-s-item-named-by-a-grant-under-the-agreement-s.json",
+      "description": "a third party's item, named by a grant under the agreement's end rule, both unchanged",
+      "expect": "valid"
+    },
+    {
+      "id": "212",
+      "file": "cases/212-version-2-changes-the-agreement-s-end-rule-that-governs-a-gr.json",
+      "description": "version 2 changes the agreement's end rule that governs a grant a third party's item pays for",
+      "expect": "R6"
+    },
+    {
+      "id": "213",
+      "file": "cases/213-a-rights-holder-that-a-pending-version-adds-withdraws-its-gr.json",
+      "description": "a rights holder that a pending version adds withdraws its grant before that version takes effect",
+      "expect": "valid"
+    },
+    {
+      "id": "214",
+      "file": "cases/214-a-payer-that-a-pending-version-adds-records-its-payment-ahea.json",
+      "description": "a payer that a pending version adds records its payment ahead of that version",
+      "expect": "valid"
+    },
+    {
+      "id": "215",
+      "file": "cases/215-a-party-that-only-a-pending-version-lists-records-a-payment.json",
+      "description": "a party that only a pending version lists records a payment for an item of the version in force",
+      "expect": "R12"
+    },
+    {
+      "id": "216",
+      "file": "cases/216-a-representative-that-a-pending-version-appoints-withdraws-t.json",
+      "description": "a representative that a pending version appoints withdraws that version's new grant before its appointment takes effect",
+      "expect": "R12"
+    },
+    {
+      "id": "217",
+      "file": "cases/217-a-representative-that-a-pending-version-appoints-withdraws-a.json",
+      "description": "a representative that a pending version appoints withdraws a grant of the version in force",
+      "expect": "R12"
+    },
+    {
+      "id": "218",
+      "file": "cases/218-a-representative-that-a-pending-version-appoints-withdraws-a.json",
+      "description": "a representative that a pending version appoints withdraws a grant in force together with the new one",
+      "expect": "R12"
+    },
+    {
+      "id": "219",
+      "file": "cases/219-an-authority-verified-key-binding-names-a-stranger-as-verifi.json",
+      "description": "an authority_verified key binding names a stranger as verifier",
+      "expect": "R6"
+    },
+    {
+      "id": "220",
+      "file": "cases/220-a-key-binding-verified-after-its-signature-was-recorded.json",
+      "description": "a key binding verified after its signature was recorded",
+      "expect": "R6"
+    },
+    {
+      "id": "221",
+      "file": "cases/221-after-the-hand-over-a-binding-verified-before-it-names-the-s.json",
+      "description": "after the hand-over, a binding verified before it names the successor",
+      "expect": "R6"
+    },
+    {
+      "id": "222",
+      "file": "cases/222-after-the-hand-over-the-successor-verifies-a-new-binding-and.json",
+      "description": "after the hand-over, the successor verifies a new binding and records the version",
+      "expect": "valid"
+    },
+    {
+      "id": "223",
+      "file": "cases/223-a-date-time-with-month-13.json",
+      "description": "a date-time with month 13",
+      "expect": "schema"
+    },
+    {
+      "id": "224",
+      "file": "cases/224-a-date-time-on-30-february.json",
+      "description": "a date-time on 30 February",
+      "expect": "schema"
+    },
+    {
+      "id": "225",
+      "file": "cases/225-a-narrowing-recorded-after-a-version-ends-the-grant-before-t.json",
+      "description": "a narrowing recorded after a version ends the grant before that version's new start",
+      "expect": "valid"
+    },
+    {
+      "id": "226",
+      "file": "cases/226-a-representative-still-appointed-whom-a-pending-version-drop.json",
+      "description": "a representative still appointed, whom a pending version drops, withdraws that version's new grant",
+      "expect": "valid"
+    },
+    {
+      "id": "227",
+      "file": "cases/227-a-listed-party-that-a-pending-version-makes-a-representative.json",
+      "description": "a listed party that a pending version makes a representative acts for the participant before then",
+      "expect": "R12"
+    },
+    {
+      "id": "228",
+      "file": "cases/228-a-representative-lifts-its-own-suspension-for-the-participan.json",
+      "description": "a representative lifts its own suspension for the participant",
+      "expect": "valid"
+    },
+    {
+      "id": "229",
+      "file": "cases/229-a-representative-lifts-its-suspension-without-acting-for-the.json",
+      "description": "a representative lifts its suspension without acting for the participant",
+      "expect": "R12"
+    },
+    {
+      "id": "230",
+      "file": "cases/230-a-former-representative-lifts-its-suspension-after-a-version.json",
+      "description": "a former representative lifts its suspension after a version ended its appointment",
+      "expect": "R12"
+    },
+    {
+      "id": "231",
+      "file": "cases/231-a-former-representative-lifts-its-suspension-in-its-own-name.json",
+      "description": "a former representative lifts its suspension in its own name",
+      "expect": "R12"
+    },
+    {
+      "id": "232",
+      "file": "cases/232-the-participant-lifts-a-former-representative-s-suspension.json",
+      "description": "the participant lifts a former representative's suspension",
+      "expect": "valid"
+    },
+    {
+      "id": "233",
+      "file": "cases/233-a-dropped-party-id-returns-for-another-party.json",
+      "description": "a dropped party id returns for another party",
+      "expect": "R5"
+    },
+    {
+      "id": "234",
+      "file": "cases/234-after-a-hand-over-the-successor-lifts-its-predecessor-s-susp.json",
+      "description": "after a hand-over, the successor lifts its predecessor's suspension",
+      "expect": "valid"
+    },
+    {
+      "id": "235",
+      "file": "cases/235-after-a-hand-over-the-predecessor-lifts-its-own-suspension.json",
+      "description": "after a hand-over, the predecessor lifts its own suspension",
+      "expect": "R10"
+    },
+    {
+      "id": "236",
+      "file": "cases/236-a-rights-holder-lifts-its-own-suspension-of-its-asset-grant.json",
+      "description": "a rights holder lifts its own suspension of its asset grant",
+      "expect": "valid"
+    },
+    {
+      "id": "237",
+      "file": "cases/237-the-participant-lifts-a-rights-holder-s-suspension-of-its-as.json",
+      "description": "the participant lifts a rights holder's suspension of its asset grant",
+      "expect": "R12"
+    },
+    {
+      "id": "238",
+      "file": "cases/238-after-a-hand-over-a-version-is-signed-with-a-key-its-predece.json",
+      "description": "after a hand-over, a version is signed with a key its predecessor manages",
+      "expect": "R6"
+    },
+    {
+      "id": "239",
+      "file": "cases/239-a-version-signed-with-a-key-the-predecessor-manages-before-t.json",
+      "description": "a version signed with a key the predecessor manages, before the hand-over, is recorded by the successor",
+      "expect": "valid"
+    },
+    {
+      "id": "240",
+      "file": "cases/240-after-a-hand-over-a-version-is-signed-with-a-key-the-success.json",
+      "description": "after a hand-over, a version is signed with a key the successor manages",
+      "expect": "valid"
+    },
+    {
+      "id": "241",
+      "file": "cases/241-a-binding-verified-at-the-instant-of-the-hand-over-names-the.json",
+      "description": "a binding verified at the instant of the hand-over names the predecessor",
+      "expect": "R6"
+    },
+    {
+      "id": "242",
+      "file": "cases/242-a-representative-that-is-also-a-rights-holder-suspends-its-o.json",
+      "description": "a representative that is also a rights holder suspends its own asset grant in its own name",
+      "expect": "valid"
+    },
+    {
+      "id": "243",
+      "file": "cases/243-a-rights-holder-suspends-its-own-asset-grant-on-behalf-of-th.json",
+      "description": "a rights holder suspends its own asset grant on behalf of the participant",
+      "expect": "R12"
+    },
+    {
+      "id": "244",
+      "file": "cases/244-a-dropped-party-comes-back-under-a-new-id-with-a-new-key.json",
+      "description": "a dropped party comes back under a new id with a new key",
+      "expect": "valid"
+    },
+    {
+      "id": "245",
+      "file": "cases/245-a-dropped-party-comes-back-under-a-new-id-with-its-old-key.json",
+      "description": "a dropped party comes back under a new id with its old key",
+      "expect": "R6"
+    },
+    {
+      "id": "246",
+      "file": "cases/246-the-studio-signs-both-versions-with-es256.json",
+      "description": "the studio signs both versions with ES256",
+      "expect": "valid"
+    },
+    {
+      "id": "247",
+      "file": "cases/247-the-participant-signs-both-versions-and-a-narrowing-with-es3.json",
+      "description": "the participant signs both versions and a narrowing with ES384",
+      "expect": "valid"
+    },
+    {
+      "id": "248",
+      "file": "cases/248-the-studio-signs-with-ps256-and-the-authority-attests-with-p.json",
+      "description": "the studio signs with PS256 and the authority attests with PS256",
+      "expect": "valid"
+    },
+    {
+      "id": "249",
+      "file": "cases/249-an-es256-signature-in-der-instead-of-r-s.json",
+      "description": "an ES256 signature in DER instead of R||S",
+      "expect": "R7"
+    },
+    {
+      "id": "250",
+      "file": "cases/250-an-es384-signature-in-der-instead-of-r-s-on-an-instruction.json",
+      "description": "an ES384 signature in DER instead of R||S on an instruction",
+      "expect": "R7"
+    },
+    {
+      "id": "251",
+      "file": "cases/251-ps256-with-a-1024-bit-rsa-key.json",
+      "description": "PS256 with a 1024-bit RSA key",
+      "expect": "R7"
+    },
+    {
+      "id": "252",
+      "file": "cases/252-ps256-with-a-20-byte-salt.json",
+      "description": "PS256 with a 20-byte salt",
+      "expect": "R7"
+    },
+    {
+      "id": "253",
+      "file": "cases/253-es256-in-the-header-with-a-p-384-key.json",
+      "description": "ES256 in the header with a P-384 key",
+      "expect": "R7"
+    },
+    {
+      "id": "254",
+      "file": "cases/254-ed25519-in-the-header-with-a-p-256-key.json",
+      "description": "Ed25519 in the header with a P-256 key",
+      "expect": "R7"
+    },
+    {
+      "id": "255",
+      "file": "cases/255-ps256-in-the-header-with-an-ed25519-key.json",
+      "description": "PS256 in the header with an Ed25519 key",
+      "expect": "R7"
+    },
+    {
+      "id": "256",
+      "file": "cases/256-the-attestation-uses-a-1024-bit-rsa-key.json",
+      "description": "the attestation uses a 1024-bit RSA key",
+      "expect": "R20"
+    },
+    {
+      "id": "257",
+      "file": "cases/257-an-rsa-modulus-written-with-a-leading-zero-octet.json",
+      "description": "an RSA modulus written with a leading zero octet",
+      "expect": "R7"
+    },
+    {
+      "id": "258",
+      "file": "cases/258-an-ec-coordinate-written-with-33-bytes.json",
+      "description": "an EC coordinate written with 33 bytes",
+      "expect": "R7"
+    },
+    {
+      "id": "259",
+      "file": "cases/259-an-ed25519-key-written-with-33-bytes.json",
+      "description": "an Ed25519 key written with 33 bytes",
+      "expect": "R7"
+    },
+    {
+      "id": "260",
+      "file": "cases/260-an-ec-public-key-that-is-not-on-the-curve.json",
+      "description": "an EC public key that is not on the curve",
+      "expect": "R7"
+    },
+    {
+      "id": "261",
+      "file": "cases/261-a-signature-whose-last-base64url-character-has-non-zero-padd.json",
+      "description": "a signature whose last base64url character has non-zero padding bits",
+      "expect": "R7"
+    },
+    {
+      "id": "262",
+      "file": "cases/262-an-integer-above-2-53-1.json",
+      "description": "an integer above 2^53 - 1",
+      "expect": "schema"
+    },
+    {
+      "id": "263",
+      "file": "cases/263-a-max-assets-above-2-53-1.json",
+      "description": "a max_assets above 2^53 - 1",
+      "expect": "schema"
+    },
+    {
+      "id": "264",
+      "file": "cases/264-a-grant-from-29-february-may-end-on-28-february-ten-years-la.json",
+      "description": "a grant from 29 February may end on 28 February ten years later, at the same time",
+      "expect": "valid"
+    },
+    {
+      "id": "265",
+      "file": "cases/265-a-grant-from-29-february-ends-a-millisecond-after-28-februar.json",
+      "description": "a grant from 29 February ends a millisecond after 28 February ten years later",
+      "expect": "R4"
+    },
+    {
+      "id": "266",
+      "file": "cases/266-a-duplicate-member-name.json",
+      "description": "a duplicate member name",
+      "expect": "R0"
+    },
+    {
+      "id": "267",
+      "file": "cases/267-a-duplicate-member-name-that-only-an-escape-hides.json",
+      "description": "a duplicate member name that only an escape hides",
+      "expect": "R0"
+    },
+    {
+      "id": "268",
+      "file": "cases/268-a-record-written-with-escapes-including-a-surrogate-pair.json",
+      "description": "a record written with escapes, including a surrogate pair",
+      "expect": "valid"
+    },
+    {
+      "id": "269",
+      "file": "cases/269-an-unpaired-surrogate-written-as-an-escape.json",
+      "description": "an unpaired surrogate written as an escape",
+      "expect": "R0"
+    },
+    {
+      "id": "270",
+      "file": "cases/270-a-noncharacter-in-a-string.json",
+      "description": "a noncharacter in a string",
+      "expect": "R0"
+    },
+    {
+      "id": "271",
+      "file": "cases/271-a-noncharacter-in-a-member-name.json",
+      "description": "a noncharacter in a member name",
+      "expect": "R0"
+    },
+    {
+      "id": "272",
+      "file": "cases/272-text-that-is-not-utf-8.json",
+      "description": "text that is not UTF-8",
+      "expect": "R0"
+    },
+    {
+      "id": "273",
+      "file": "cases/273-ps256-with-the-public-exponent-3.json",
+      "description": "PS256 with the public exponent 3",
+      "expect": "R7"
+    },
+    {
+      "id": "274",
+      "file": "cases/274-the-studio-signs-with-ml-dsa-65-and-the-authority-attests-wi.json",
+      "description": "the studio signs with ML-DSA-65 and the authority attests with ML-DSA-65",
+      "expect": "valid"
+    },
+    {
+      "id": "275",
+      "file": "cases/275-the-participant-signs-both-versions-and-a-narrowing-with-ml.json",
+      "description": "the participant signs both versions and a narrowing with ML-DSA-65",
+      "expect": "valid"
+    },
+    {
+      "id": "276",
+      "file": "cases/276-ml-dsa-65-in-the-header-with-an-ed25519-key.json",
+      "description": "ML-DSA-65 in the header with an Ed25519 key",
+      "expect": "R7"
+    },
+    {
+      "id": "277",
+      "file": "cases/277-ed25519-in-the-header-with-an-ml-dsa-65-key.json",
+      "description": "Ed25519 in the header with an ML-DSA-65 key",
+      "expect": "R7"
+    },
+    {
+      "id": "278",
+      "file": "cases/278-an-ml-dsa-65-pub-written-with-1953-bytes.json",
+      "description": "an ML-DSA-65 pub written with 1953 bytes",
+      "expect": "R7"
+    },
+    {
+      "id": "279",
+      "file": "cases/279-an-ml-dsa-65-key-whose-jwk-alg-names-ml-dsa-44.json",
+      "description": "an ML-DSA-65 key whose jwk alg names ML-DSA-44",
+      "expect": "R7"
+    },
+    {
+      "id": "280",
+      "file": "cases/280-an-ml-dsa-65-jwk-without-its-alg-member.json",
+      "description": "an ML-DSA-65 jwk without its alg member",
+      "expect": "R7"
+    },
+    {
+      "id": "281",
+      "file": "cases/281-a-jwk-with-an-ml-dsa-private-key-member-priv.json",
+      "description": "a jwk with an ML-DSA private key member (priv)",
+      "expect": "schema"
+    },
+    {
+      "id": "282",
+      "file": "cases/282-the-participant-signs-the-instant-the-document-is-presented.json",
+      "description": "the participant signs the instant the document is presented and the verification made",
+      "expect": "valid"
+    },
+    {
+      "id": "283",
+      "file": "cases/283-the-second-x5c-certificate-has-the-wrong-base64-padding.json",
+      "description": "the second x5c certificate has the wrong base64 padding",
+      "expect": "R7"
+    },
+    {
+      "id": "284",
+      "file": "cases/284-a-disclosed-amount-written-as-a-number.json",
+      "description": "a disclosed amount written as a number",
+      "expect": "R19"
+    },
+    {
+      "id": "285",
+      "file": "cases/285-a-jwk-that-says-it-is-for-signatures-use-sig-key-ops-verify.json",
+      "description": "a jwk that says it is for signatures (use sig, key_ops verify)",
+      "expect": "valid"
+    },
+    {
+      "id": "286",
+      "file": "cases/286-a-jwk-marked-for-encryption-use-enc.json",
+      "description": "a jwk marked for encryption (use enc)",
+      "expect": "R7"
+    },
+    {
+      "id": "287",
+      "file": "cases/287-a-jwk-whose-key-ops-do-not-include-verify.json",
+      "description": "a jwk whose key_ops do not include verify",
+      "expect": "R7"
+    },
+    {
+      "id": "288",
+      "file": "cases/288-a-jwk-with-the-rsa-private-member-oth.json",
+      "description": "a jwk with the RSA private member oth",
+      "expect": "schema"
+    },
+    {
+      "id": "289",
+      "file": "cases/289-hand-over-keys-uri-on-the-same-origin-written-with-an-upper.json",
+      "description": "hand-over keys_uri on the same origin, written with an upper-case host and port 443",
+      "expect": "valid"
+    },
+    {
+      "id": "290",
+      "file": "cases/290-hand-over-keys-uri-on-the-same-host-but-another-port.json",
+      "description": "hand-over keys_uri on the same host but another port",
+      "expect": "R10"
+    },
+    {
+      "id": "291",
+      "file": "cases/291-an-unbinding-that-takes-effect-after-it-is-recorded.json",
+      "description": "an unbinding that takes effect after it is recorded",
+      "expect": "R11"
+    },
+    {
+      "id": "292",
+      "file": "cases/292-an-x5c-certificate-whose-base64-has-pad-bits-that-are-not-ze.json",
+      "description": "an x5c certificate whose base64 has pad bits that are not zero",
+      "expect": "R7"
+    },
+    {
+      "id": "293",
+      "file": "cases/293-version-2-repeats-a-rights-holder-s-asset-rights-entry-which.json",
+      "description": "version 2 repeats a rights holder's asset_rights entry, which is still the same set",
+      "expect": "valid"
+    },
+    {
+      "id": "294",
+      "file": "cases/294-a-number-beyond-the-range-of-an-ieee-754-double.json",
+      "description": "a number beyond the range of an IEEE 754 double",
+      "expect": "R0"
+    },
+    {
+      "id": "295",
+      "file": "cases/295-an-integer-of-400-digits-beyond-the-range-of-an-ieee-754-dou.json",
+      "description": "an integer of 400 digits, beyond the range of an IEEE 754 double",
+      "expect": "R0"
+    },
+    {
+      "id": "296",
+      "file": "cases/296-a-seq-written-1-0-which-is-the-number-1-signatures-cover-the.json",
+      "description": "a seq written 1.0, which is the number 1: signatures cover the JCS form 1",
+      "expect": "valid"
+    },
+    {
+      "id": "297",
+      "file": "cases/297-authority-keys-uri-with-a-backslash-before-an.json",
+      "description": "authority keys_uri with a backslash before an @",
+      "expect": "schema"
+    },
+    {
+      "id": "298",
+      "file": "cases/298-authority-keys-uri-with-userinfo.json",
+      "description": "authority keys_uri with userinfo",
+      "expect": "schema"
+    },
+    {
+      "id": "299",
+      "file": "cases/299-authority-keys-uri-with-a-percent-encoded-host.json",
+      "description": "authority keys_uri with a percent-encoded host",
+      "expect": "schema"
+    },
+    {
+      "id": "300",
+      "file": "cases/300-an-authority-contact-uri-with-a-backslash.json",
+      "description": "an authority contact URI with a backslash",
+      "expect": "schema"
+    },
+    {
+      "id": "301",
+      "file": "cases/301-an-authority-contact-uri-with-a-character-outside-ascii.json",
+      "description": "an authority contact URI with a character outside ASCII",
+      "expect": "schema"
+    },
+    {
+      "id": "302",
+      "file": "cases/302-term-states-effective-uses-lists-proto-twice.json",
+      "description": "term_states effective uses lists __proto__ twice",
+      "expect": "schema"
+    },
+    {
+      "id": "303",
+      "file": "cases/303-an-ed25519-key-of-small-order-with-a-signature-rfc-8032-acce.json",
+      "description": "an Ed25519 key of small order, with a signature RFC 8032 accepts",
+      "expect": "R7"
+    },
+    {
+      "id": "304",
+      "file": "cases/304-an-ed25519-key-whose-x-is-not-canonical-y-p-2.json",
+      "description": "an Ed25519 key whose x is not canonical (y = p + 2)",
+      "expect": "R7"
+    },
+    {
+      "id": "305",
+      "file": "cases/305-an-ed25519-signature-whose-r-is-the-identity-point.json",
+      "description": "an Ed25519 signature whose R is the identity point",
+      "expect": "R7"
+    },
+    {
+      "id": "306",
+      "file": "cases/306-ps256-with-a-4104-bit-rsa-key.json",
+      "description": "PS256 with a 4104-bit RSA key",
+      "expect": "R7"
+    },
+    {
+      "id": "307",
+      "file": "cases/307-ps256-with-the-public-exponent-2-31-1-80-00-00-01.json",
+      "description": "PS256 with the public exponent 2^31 + 1 (80 00 00 01)",
+      "expect": "R7"
+    },
+    {
+      "id": "308",
+      "file": "cases/308-ps256-with-a-public-exponent-of-5-octets-2-32-15.json",
+      "description": "PS256 with a public exponent of 5 octets (2^32 + 15)",
+      "expect": "R7"
+    },
+    {
+      "id": "309",
+      "file": "cases/309-a-protected-header-that-starts-with-a-byte-order-mark.json",
+      "description": "a protected header that starts with a byte order mark",
+      "expect": "R7"
+    },
+    {
+      "id": "310",
+      "file": "cases/310-a-protected-header-that-names-alg-twice.json",
+      "description": "a protected header that names alg twice",
+      "expect": "R7"
+    }
+  ]
+}
