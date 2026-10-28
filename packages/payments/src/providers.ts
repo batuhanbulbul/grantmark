@@ -247,7 +247,7 @@ export class SolanaUsdcDevnet implements PaymentProvider<SolanaPaymentRequest> {
   }
 }
 
-/** Stripe in test mode. The interface is in place; the implementation comes after the MVP. */
+/** Stripe in test mode: only the interface exists so far. */
 export class StripeTestMode implements PaymentProvider<never> {
   readonly id = 'stripe-test' as const;
 
@@ -256,10 +256,10 @@ export class StripeTestMode implements PaymentProvider<never> {
   }
 
   async createPaymentRequest(_input: PaymentInput): Promise<never> {
-    throw new Error('Stripe test mode is not implemented yet; the MVP settles in Solana USDC on devnet');
+    throw new Error('Stripe test mode is not implemented yet; payments settle in Solana USDC on devnet');
   }
 
   async verifyPayment(_request: never, _evidence: PaymentEvidence): Promise<never> {
-    throw new Error('Stripe test mode is not implemented yet; the MVP settles in Solana USDC on devnet');
+    throw new Error('Stripe test mode is not implemented yet; payments settle in Solana USDC on devnet');
   }
 }

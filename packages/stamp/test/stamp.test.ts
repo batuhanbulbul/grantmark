@@ -14,7 +14,7 @@ const DECLARATION_URI = 'https://id.humanconsent.org/HCRN-0000-0068-F';
 
 const stampInput = { image: PNG, mimeType: 'image/png' as const, licenseUrl: LICENSE_URL, declarationUri: DECLARATION_URI, receipt: 'header.payload.signature', title: 'placeholder.png' };
 
-/** Changes one pixel byte inside the first IDAT chunk and fixes the chunk CRC, so the PNG stays well-formed. */
+/** Changes one pixel byte in the first IDAT chunk and fixes its CRC: the PNG stays well-formed. */
 function tamper(png: Uint8Array): Uint8Array {
   const copy = new Uint8Array(png);
   const view = new DataView(copy.buffer);

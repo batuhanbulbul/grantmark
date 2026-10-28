@@ -160,7 +160,7 @@ describe('assertDevnetGenesis', () => {
   });
 });
 
-describe('StripeTestMode (interface only in the MVP)', () => {
+describe('StripeTestMode (interface only)', () => {
   it('refuses live keys', () => {
     expect(() => new StripeTestMode('sk_live_abc')).toThrow(/test/);
     expect(() => new StripeTestMode('sk_test_abc')).not.toThrow();

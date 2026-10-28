@@ -116,7 +116,7 @@ const isRefusal = (value: object): value is Refusal => 'kind' in value && value.
 const permits = (scope: ScopeEvaluation | undefined) =>
   scope !== undefined && (scope.decision === 'permitted' || scope.decision === 'permitted_with_terms');
 
-/** The 0-based position of the offer with these canonical terms in the current declaration, or -1. */
+/** The 0-based index of the offer with these canonical terms in the current declaration, or -1. */
 const offerIndex = (loaded: Loaded, canonical: string) =>
   loaded.right.licenses.findIndex((license) => canonicalElement(license.element) === canonical);
 const noLongerOffered = () =>

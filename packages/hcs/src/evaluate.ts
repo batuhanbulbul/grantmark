@@ -433,7 +433,7 @@ const RANK: Readonly<Record<Decision, number>> = {
   prohibited: 3,
 };
 
-/** The subject category named by a Rights Subject Record's Schema Profile, if it names a known one. */
+/** The subject category a Rights Subject Record's Schema Profile names, if it is a known one. */
 function recordCategory(record: unknown): SubjectCategory | undefined {
   if (typeof record !== 'object' || record === null) return undefined;
   const additionalType = (record as Record<string, unknown>).additionalType;

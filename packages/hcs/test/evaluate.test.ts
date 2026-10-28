@@ -467,7 +467,7 @@ describe('evaluate: offers and decisions', () => {
     expect(reasonCodes(run(setup, { scopes: ['image'] }))).toEqual(['not_yet_in_force']);
   });
 
-  it('does not rely on component declarations in the MVP', () => {
+  it('does not rely on component declarations yet', () => {
     const setup = setupWith(
       miraDeclaration('HCRN-0000-006F-P', '', `<license><permits type="usage">hcs:ai-generate</permits>${LEGAL}</license><hcs:included registration-id="HCRN-0000-0001-1"/>`),
     );
