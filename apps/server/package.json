@@ -14,8 +14,8 @@
     "@grantmark/hcs": "0.0.0",
     "@grantmark/payments": "0.0.0",
     "@grantmark/stamp": "0.0.0",
-    "@hono/node-server": "2.1.1",
-    "hono": "4.13.9",
+    "@hono/node-server": "2.1.5",
+    "hono": "4.13.13",
     "jose": "6.2.12",
     "tsx": "4.23.15"
   }

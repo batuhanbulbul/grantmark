@@ -1,5 +1,5 @@
 /**
- * Stamps licensed images with a C2PA manifest (via @contentauth/c2pa-node, pinned to 0.9.7) that
+ * Stamps licensed images with a C2PA manifest (via @contentauth/c2pa-node, pinned to 0.9.10) that
  * carries a CAWG consent assertion pointing at the Grantmark license record, plus the license
  * receipt. Signing uses test PKI only; outside Grantmark's verifier the signer shows as unknown.
  */
