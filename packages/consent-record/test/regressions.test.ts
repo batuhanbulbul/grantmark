@@ -1332,12 +1332,17 @@ describe('1. narrowings recorded in the reverse of their effect order', () => {
     expectFaster(checked, BOUND_MS);
   });
 
-  it('6000 narrowings of a minimal grant: returns in time, a limit problem allowed', TIMEOUT, () => {
+  it('6000 narrowings of a minimal grant: stops at the step limit, in time', TIMEOUT, () => {
     const text = JSON.stringify(withReverseNarrowings(6_000, 'minimal', false));
     expect(byteLength(text)).toBeLessThan(LIMITS.textBytes);
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget. A verifier that left part of it uncounted would
+    // run to the end and find the given term states wrong (R17, R18), since the builder does
+    // not derive them again.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
+    expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
 });
@@ -1562,12 +1567,17 @@ describe('9. narrowings in effect at many instants', () => {
     expectFaster(checked, BOUND_MS);
   });
 
-  it('6000 such narrowings, term states not derived again: in time, a limit problem allowed', TIMEOUT, () => {
+  it('6000 such narrowings, term states not derived again: stops at the step limit, in time', TIMEOUT, () => {
     const text = JSON.stringify(withForwardNarrowings(6_000, false));
     expect(byteLength(text)).toBeLessThan(LIMITS.textBytes);
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget. A verifier that left part of it uncounted would
+    // run to the end and find the given term states wrong (R17, R18), since the builder does
+    // not derive them again.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
+    expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
 
@@ -1608,13 +1618,16 @@ describe('10. a state that holds at many candidate instants after as_of', () => 
     expectFaster(checked, BOUND_MS);
   });
 
-  it(`${GRANTS} grants, each narrowed again at ${LATER} instants after as_of, sealed into a valid record: in time, a limit problem allowed`, TIMEOUT, () => {
+  it(`${GRANTS} grants, each narrowed again at ${LATER} instants after as_of, sealed into a valid record: stops at the step limit, in time`, TIMEOUT, () => {
     expect(byteLength(laterNarrowingsText(GRANTS, LATER + 1))).toBeGreaterThan(LIMITS.textBytes);
     const text = laterNarrowingsText(GRANTS, LATER);
     expect(byteLength(text)).toBeLessThan(LIMITS.textBytes);
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget: a verifier that left part of it uncounted would
+    // find the record valid.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
     expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
@@ -1628,7 +1641,7 @@ describe('10. a state that holds at many candidate instants after as_of', () => 
   const LONG_GRANTS = 3;
   const LONG_LATER = 380;
 
-  it(`${LONG_GRANTS} grants naming 256 works of 1100 UTF-16 code units, narrowed again at ${LONG_LATER} instants after as_of, sealed into a valid record: in time, a limit problem allowed`, TIMEOUT, () => {
+  it(`${LONG_GRANTS} grants naming 256 works of 1100 UTF-16 code units, narrowed again at ${LONG_LATER} instants after as_of, sealed into a valid record: stops at the step limit, in time`, TIMEOUT, () => {
     const record = laterNarrowingsRecord(LONG_GRANTS, LONG_LATER, astralWorks);
     const version2 = record.agreements[1]!;
     const works = new Set<string>();
@@ -1649,6 +1662,9 @@ describe('10. a state that holds at many candidate instants after as_of', () => 
     const checked = measure(() => checkRecordText(text));
     expectNoInternal(checked.result);
     expectRulesRan(checked.result);
+    // The work is more than the step budget: a verifier that left part of it uncounted would
+    // find the record valid.
+    expect(rules(checked.result), summary(checked.result)).toContain('limit');
     expect(rules(checked.result).filter((rule) => rule !== 'limit'), summary(checked.result)).toEqual([]);
     expectFaster(checked, BOUND_MS);
   });
@@ -1658,9 +1674,10 @@ describe('11. per-value and per-signature work', () => {
   const BOUND_MS = 3_000;
   /**
    * Narrowings that each keep 255 of the 256 works of all 256 grants: the shape of a known
-   * slow input.
+   * slow input. 200 take about 1.5 times the step budget, so small changes to step charges keep
+   * it over the limit.
    */
-  const RESTRICTIONS = 140;
+  const RESTRICTIONS = 200;
   /**
    * Pairs of a suspension and the resumption that lifts it: 3900 signed events, with the
    * versions' signatures and the attestation within `LIMITS.signatures`.
