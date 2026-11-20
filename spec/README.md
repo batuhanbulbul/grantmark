@@ -2,13 +2,16 @@
 
 **Status: draft 0.2.0 (2026-10-27).** Experimental, not affiliated with or endorsed by the
 Creator Assertions Working Group (CAWG), the Decentralized Identity Foundation (DIF) or C2PA.
-Not legal advice.
+Not legal advice. On 2026-11-20 the text was aligned with content v0.22 of the CAWG consent
+draft as proposed in [cawg-consent-assertion PR #5][cawg-pr5], not merged on that date; the
+schema, the profile identifier and the test vectors did not change.
 
 A C2PA manifest can carry a CAWG consent assertion, `cawg.consent`. Each of its references
 points to an authoritative source; one kind of source is a *consent authority*, "a service
 that holds and resolves the current consent terms a reference points to"
 ([CAWG consent assertion 1.0 draft][cawg-consent] of 12 July 2026, content v0.21, defined
-terms). The draft
+terms; the same in the proposed v0.22). Section and rule numbers and quotations below follow
+the proposed v0.22 unless marked v0.21. The draft
 lists what a consent authority ought to be able to express (§5, consent authority
 recommendation). It does not define how a source stores or resolves consent (§6, out of
 scope), so the format of the answer is open.
@@ -43,8 +46,9 @@ several people carries one reference, and has one record, per person.
 
 ## Design decisions
 
-All decisions are dated 2026-10-27. They build only on published specifications: C2PA 2.x,
-CAWG consent assertion 1.0 draft (12 July 2026, content v0.21), the CAWG identity assertion,
+All decisions are dated 2026-10-27 and were checked again against the proposed content v0.22
+on 2026-11-20. They build only on published specifications: C2PA 2.x,
+CAWG consent assertion 1.0 draft (12 July 2026, content v0.21; v0.22 as proposed in PR #5), the CAWG identity assertion,
 CAWG training and data mining assertion 1.1, JSON Schema 2020-12, RFC 3161, RFC 3339,
 RFC 4648, RFC 6454, RFC 6838, RFC 7493, RFC 7515, RFC 7517, RFC 7518, RFC 7638, RFC 7797,
 RFC 8032, RFC 8037, RFC 8785, RFC 9864, RFC 9964, BCP 47, FIPS 186-5, FIPS 204, ISO 3166-1,
@@ -54,13 +58,13 @@ ISO 3166-2, ISO 4217 and ISO 17442-2.
 |---|---|---|
 | D1 | The record is the target of an existing `cawg.consent` reference. No new C2PA assertion. | The draft defines the pointer; what is missing is the shape of what it points to. |
 | D2 | Plain JSON described by JSON Schema, with `snake_case` names like `cawg.consent`. JSON-LD is not required. | Easy to implement and validate. A JSON-LD mapping can follow. |
-| D3 | `agreements[]` holds every signed version. Version n + 1 restates the whole agreement, names version n by digest and replaces it. `record_uri` never changes. | The draft lets the participant or an authorized representative "grant, extend, narrow, or withdraw terms at that authority at any time; such changes take effect in the authority's record and are visible through existing references without modification to the asset" (§4.2, rule 5). |
+| D3 | `agreements[]` holds every signed version. Version n + 1 restates the whole agreement, names version n by digest and replaces it. `record_uri` never changes. | The draft lets the participant or an authorized representative "grant, extend, narrow, or withdraw terms at that authority at any time; such changes take effect in the authority's record and are visible through existing references without modification to the asset" (§4.2, rule 4), and leaves to the referenced source "which consent record replaces another" (§4.2, rule 5). |
 | D4 | Each signed agreement names `profile`, `record_uri` and `authority_id`. | A signed agreement cannot be presented under another record, or by an authority the parties did not choose unless that authority hands the record over with a signed `authority_transferred` event (D22). |
-| D5 | The participant signs every version personally, and so does every licensee of a grant. Any other party signs each version that changes something of its own: its party entry, a compensation item it pays or receives (or the grants that item pays for), a grant it holds, its asset terms or `asset_rights` entries, or the biometric declaration naming it as holder (R6). An authorized representative may co-sign and may submit narrowing, suspension and withdrawal for the participant, but never signs in the participant's place. | A version cannot change the entry of a party it keeps listed, or create, change or remove what a party declares, owes, is owed or holds as a licensee, without that party's signature. A party with nothing of its own left in the record may be dropped without signing. Dropping a term that is already withdrawn or ended changes nothing and needs no signature. Sublicensees hold their rights through a licensee and do not sign for the grant. Every licensee signs every version because a version replaces the whole agreement, including the prohibitions, end rules and other grants beside its license; licensees that should not depend on one another's signatures use separate records. For the participant this is stricter than the draft, which lets an authorized representative declare identity consent (§4.1) and grant or extend terms (§4.2, rule 5): the legal texts below ask for the individual's own signature or consent, and New York excludes digital replica use from a model's power of attorney. |
+| D5 | The participant signs every version personally, and so does every licensee of a grant. Any other party signs each version that changes something of its own: its party entry, a compensation item it pays or receives (or the grants that item pays for), a grant it holds, its asset terms or `asset_rights` entries, or the biometric declaration naming it as holder (R6). An authorized representative may co-sign and may submit narrowing, suspension and withdrawal for the participant, but never signs in the participant's place. | A version cannot change the entry of a party it keeps listed, or create, change or remove what a party declares, owes, is owed or holds as a licensee, without that party's signature. A party with nothing of its own left in the record may be dropped without signing. Dropping a term that is already withdrawn or ended changes nothing and needs no signature. Sublicensees hold their rights through a licensee and do not sign for the grant. Every licensee signs every version because a version replaces the whole agreement, including the prohibitions, end rules and other grants beside its license; licensees that should not depend on one another's signatures use separate records. For the participant this is stricter than the draft, which lets an authorized representative declare identity consent (§4.1) and grant or extend terms (§4.2, rule 4): the legal texts below ask for the individual's own signature or consent, and New York excludes digital replica use from a model's power of attorney. |
 | D6 | Every signature is a compact JWS with a detached, unencoded payload (RFC 7515, RFC 7797) over the RFC 8785 form of a *signing statement* (below). The public key is embedded; `kid` is its RFC 7638 thumbprint; `key_binding` says how the key is tied to the signer and who holds it. Algorithms are fully specified (`ES256`, `ES384`, `Ed25519`, `PS256`, `ML-DSA-65`). | No new cryptography. The statement binds profile, record, signer and time to what is signed. RFC 9864 deprecates the polymorphic `EdDSA` name. A grant can stay in force for many years, while NIST IR 8547 (§4.1.1) deprecates ECDSA, EdDSA and RSA after 2030 and disallows them after 2035; `ML-DSA-65` (FIPS 204, RFC 9964) is a post-quantum algorithm a record can use today. |
 | D7 | Every grant has an end, at most ten years after its start. A prohibition may have no end. | New York asks the consent to detail the duration of use. The ten-year cap is this profile's choice: it follows S. 4591 (not law), which limits a license to ten years while the individual is living. A prohibition only restricts, so an open end is safe. |
-| D8 | Between versions, a grant changes only through narrowing operations. Narrowings are cumulative and outlive later versions. Widening needs a new version signed by every required signer, or a new term. | The draft: "A later signer cannot widen a participant's grant by asserting `supersedes_prior`" (§4.2, rule 4). Keeping narrowings across versions stops an amendment from silently restoring something the participant removed. |
-| D9 | A narrowing, suspension or withdrawal from a party takes effect in the record when the authority receives it, or at a later instant that the party signs. The record has no notice period. `withdrawal_right` only records whether the agreement allows withdrawal without breach, and `end_of_use` says what happens to assets already published. | The draft lets the participant withdraw "at any time" (§4.2, rule 5). A notice period in the record would let an agreement postpone a withdrawal without limit, and a later effective time asserted only by the authority cannot be checked. The record shows that a withdrawal was received and when; what it means under the contract is for the parties. The Danish bill's remarks say that consent given when a contract is made can be withdrawn, but under the general rules of contract law, and that the withdrawal does not by itself make the contract invalid or end it. |
+| D8 | Between versions, a grant changes only through narrowing operations. Narrowings are cumulative and outlive later versions. Widening needs a new version signed by every required signer, or a new term. | The draft: "A later claim signer cannot widen a participant's grant" (§4.2, rule 3). In the proposed v0.22 the source alone decides which record replaces another (§4.2, rule 5); v0.21 also had a `supersedes_prior` flag, which v0.22 removes. Inside a record of this profile that order is fixed by version numbers (D3) and narrowing events. Keeping narrowings across versions stops an amendment from silently restoring something the participant removed. |
+| D9 | A narrowing, suspension or withdrawal from a party takes effect in the record when the authority receives it, or at a later instant that the party signs. The record has no notice period. `withdrawal_right` only records whether the agreement allows withdrawal without breach, and `end_of_use` says what happens to assets already published. | The draft lets the participant withdraw "at any time" (§4.2, rule 4). A notice period in the record would let an agreement postpone a withdrawal without limit, and a later effective time asserted only by the authority cannot be checked. The record shows that a withdrawal was received and when; what it means under the contract is for the parties. The Danish bill's remarks say that consent given when a contract is made can be withdrawn, but under the general rules of contract law, and that the withdrawal does not by itself make the contract invalid or end it. |
 | D10 | History is an append-only list of events, each carrying the digest of the previous event. The authority signs every response. | A party that keeps an earlier signed response can prove a later one removed, reordered or changed events. |
 | D11 | Values that need not be public (names, identifier values, amounts, payment references) can be salted commitments. Their cleartext lives in `disclosures`, which only the full view carries. | The same signatures verify on the public and the full view. After `retention.disclosures_until` the authority can delete the cleartext without breaking verification. |
 | D12 | The record holds payment *evidence* only: amounts, references and digests of invoices or confirmations. The authority never moves money. Account and card numbers are never stored. | Keeps the authority out of payment processing and minimises personal data. |
@@ -452,7 +456,10 @@ This profile does not decide how consent combines with other signals (the draft 
 out of scope, §6). A consumer that wants to know whether a record permits a use of an asset
 can apply these steps; any failure means no permission from this record.
 
-1. Validate the asset's C2PA manifest and its claim signer under the consumer's trust list.
+1. Validate the asset's C2PA manifest, its claim signer and any identity endorser of the
+   consent assertion under the consumer's trust list. The draft has the consumer evaluate
+   each of these parties separately: "trust in one does not imply trust in another" (§4.2,
+   rule 1).
 2. Resolve the reference's `uri` and verify the record (R0–R20). Check that `record_uri`
    equals the `uri`, that `example` is not `true`, and that the response is fresh: `as_of` is
    not later than now, allowing for clock skew, and now is before both
@@ -463,10 +470,13 @@ can apply these steps; any failure means no permission from this record.
    `authority_verified` key bindings and `authority_managed` keys rest on the authority's
    word. An authority is known by its origin: the same-origin rule for `keys_uri` cannot tell
    apart authorities that share one.
-4. For an identity reference, check that the identity named by the `cawg.identity` assertion
-   that `bound_actor` refers to matches a value in the participant's `identity_binding` (open
-   question 2). Without `identity_binding` this check cannot be made, and only the binding of
-   step 5 ties the asset to the record.
+4. For an identity reference, `bound_actor` refers to one `cawg.identity` assertion of the
+   manifest; the proposed v0.22 makes it a hashed URI (§4.3). Check that the hash matches that
+   assertion: the consumer does this itself, the same way C2PA checks hashed URIs, because a
+   generic C2PA validator does not check a hashed URI inside an assertion's payload. Then
+   check that the identity it names matches a value in the participant's
+   `identity_binding`. Without `identity_binding` this check cannot be made, and only the
+   binding of step 5 ties the asset to the record.
 5. Find the live binding whose `manifest_label` is the manifest's label (R16 allows one) and whose `claim_signer`
    fields match the claim's signing certificate, and that has no `asset_unbound` event. When
    the consumer can read the claim's hard-binding reference or hash the file, it also compares
@@ -537,14 +547,15 @@ data about special-category processing (open question 12).
 
 ## Mapping to the CAWG minimum recommendation (§5)
 
-| CAWG consent v0.21 §5: a consent authority ought to be able to express | Where |
+| CAWG consent §5 (v0.21 with the additions proposed in v0.22): a consent authority ought to be able to express | Where |
 |---|---|
 | the declaring party, the party on whose behalf, and the basis for that authorization | `parties[]` (`roles`, `represents`, `authorization_basis`, `authorization_evidence`), `declared_by`, `signatures[]`, event `actor` and `on_behalf_of` |
 | asset consent terms: AI training and data mining, licensing posture, derivative works, named contextual prohibitions, compensation | asset terms (`cawg.*` uses, `asset.derive`), `asset_rights[].posture`, `scope.prohibited_contexts`, `compensation[]` |
 | the grant: granted and prohibited uses, scope, consideration, term, parties | `terms[]` (`kind`, `uses`, `scope`, `compensation`, `valid_from`/`valid_until`, `licensees`) and `parties[]` |
-| identity consent terms covering likeness, voice, movement, mannerisms, persona | identity terms, `identity_attributes` (also `name` and `image`, from the draft's definition of identity consent) |
+| identity consent terms covering name, image, likeness, voice, movement, mannerisms, persona | identity terms, `identity_attributes` |
 | biometric-identifier restrictions | `biometric_identifiers` |
 | the current state and revocability of each term | `state.term_states[]`, `withdrawn` events, `withdrawal_right`, `end_of_use` |
+| the history of each term: its prior states and the date and time each took effect | `agreements[]` (every signed version), `events[]` with `effective_at` (append-only, D10); the state at any instant is derived from them ("Deriving the state") |
 | the temporal validity of each term | `valid_from`, `valid_until`, `term_states[].effective.valid_until` |
 | the continuity of records, durability and succession | `authority.continuity`, `authority_transferred` events signed over the history, persistent `record_uri` |
 | the binding of the record to the asset and, for identity consent, to the participant's identity | `asset_bindings[]`; the participant's `identity_binding` for `bound_actor` |
@@ -583,14 +594,16 @@ Germany from the campaign and withdraws the voice grant by e-mail.
 
 ## Open questions
 
-1. CAWG has not decided whether `cawg.consent` stays its own label or moves into
-   `cawg.metadata` (the draft's Appendix A, editorial flags). The agenda of the
-   [CAWG meeting of 2026-10-05][cawg-2026-10-05] lists a unified CAWG 2.0 draft circulating
-   on 30 October 2026. The pointer (`uri`) is expected to survive either way.
-2. The syntax of `bound_actor` is not fixed in the draft, so how `identity_binding` matches it
-   is provisional.
-3. The draft asks each reference to identify its asset by its C2PA hard binding (§4.3) but
-   does not name a field. `asset_bindings` should align once it does.
+1. Resolved in the proposed v0.22 (PR #5): `cawg.consent` keeps its own label and is a created assertion
+   in the manifest's assertion store (§4). The unified CAWG 2.0 draft that the
+   [CAWG meeting of 2026-10-05][cawg-2026-10-05] expected for 30 October 2026 was not public
+   on 2026-11-20.
+2. Partly resolved in the proposed v0.22 (PR #5): `bound_actor` is a hashed URI to the participant's
+   `cawg.identity` assertion (§4.3). How a value of `identity_binding` matches the identity
+   that assertion names is still provisional.
+3. The draft no longer requires each reference to identify its asset by its C2PA content
+   binding: in the proposed v0.22 a reference SHOULD do so, and a field for it is future work (§4.3,
+   §8). `asset_bindings` should align once that field exists.
 4. A persistent identifier for `profile` and `$id`; the `.example` host is a placeholder.
 5. How verifiers authenticate to receive the full view.
 6. Privacy-preserving status checks. W3C Bitstring Status List gives one bit per entry, which
@@ -622,6 +635,7 @@ or the [Creative Commons Attribution 4.0 International License][cc-by-4], at you
 (SPDX: `Apache-2.0 OR CC-BY-4.0`).
 
 [cawg-consent]: https://cawg.io/consent/1.0-draft+initial-version/
+[cawg-pr5]: https://github.com/decentralized-identity/cawg-consent-assertion/pull/5
 [cc-by-4]: https://creativecommons.org/licenses/by/4.0/
 [apache-2]: https://www.apache.org/licenses/LICENSE-2.0
 [cawg-2026-10-05]: https://cawg.io/meeting-notes/2026-10-05/

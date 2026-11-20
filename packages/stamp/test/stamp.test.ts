@@ -41,12 +41,12 @@ describe('placeholderPng', () => {
   });
 });
 
-describe('consentAssertion (CAWG consent 1.0 draft, v0.21)', () => {
+describe('consentAssertion (CAWG consent 1.0 draft, v0.21 and proposed v0.22)', () => {
   it('references the license record as the consent authority, and the declaration when known', () => {
-    expect(consentAssertion(LICENSE_URL, DECLARATION_URI)).toEqual({
+    expect(consentAssertion(LICENSE_URL, DECLARATION_URI)).toStrictEqual({
       consent_references: [
-        { uri: LICENSE_URL, reference_type: 'consent_authority', consent_domain: 'identity', supersedes_prior: false },
-        { uri: DECLARATION_URI, reference_type: 'consent_authority', consent_domain: 'identity', supersedes_prior: false },
+        { uri: LICENSE_URL, reference_type: 'consent_authority', consent_domain: 'identity' },
+        { uri: DECLARATION_URI, reference_type: 'consent_authority', consent_domain: 'identity' },
       ],
     });
     expect(consentAssertion(LICENSE_URL).consent_references).toHaveLength(1);

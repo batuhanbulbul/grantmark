@@ -9,7 +9,7 @@ import { Builder, Context, LocalSigner, Reader } from '@contentauth/c2pa-node';
 
 export { placeholderPng } from './placeholder';
 
-/** CAWG consent assertion label (consent 1.0 draft, content v0.21). */
+/** CAWG consent assertion label (consent 1.0 draft, content v0.21 and the proposed v0.22). */
 export const CONSENT_LABEL = 'cawg.consent';
 /** Grantmark's assertion that carries the license receipt (a provisional label). */
 export const RECEIPT_LABEL = 'grantmark.receipt';
@@ -21,21 +21,21 @@ export interface ConsentReference {
   readonly uri: string;
   readonly reference_type: 'consent_authority' | 'contract' | 'permission_record';
   readonly consent_domain: 'identity' | 'asset';
-  readonly supersedes_prior?: boolean;
 }
 
 /**
  * The `cawg.consent` payload: the license record as consent authority and, when known, the HCS
- * declaration's canonical URI. The draft makes `bound_actor` mandatory for the identity domain,
- * but it needs a `cawg.identity` assertion, which Grantmark does not produce yet, so it is left
- * out knowingly.
+ * declaration's canonical URI. The draft makes `bound_actor` mandatory for the identity domain:
+ * a hashed URI to the participant's `cawg.identity` assertion. Grantmark does not produce that
+ * assertion yet, so `bound_actor` is left out knowingly. There is no `supersedes_prior`: it is
+ * optional in v0.21, and the proposed v0.22 removes it and leaves the order of consent records
+ * to the referenced source.
  */
 export function consentAssertion(licenseUrl: string, declarationUri?: string): { consent_references: ConsentReference[] } {
   const reference = (uri: string): ConsentReference => ({
     uri,
     reference_type: 'consent_authority',
     consent_domain: 'identity',
-    supersedes_prior: false,
   });
   return { consent_references: [reference(licenseUrl), ...(declarationUri === undefined ? [] : [reference(declarationUri)])] };
 }
